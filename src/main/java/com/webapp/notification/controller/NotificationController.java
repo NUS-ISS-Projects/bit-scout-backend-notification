@@ -44,4 +44,10 @@ public class NotificationController {
         List<NotificationDto> notifications = notificationService.getNotificationsByUserId(userId);
         return ResponseEntity.ok(notifications);
     }
+
+    // Health check endpoint
+    @GetMapping("/health")
+    public ResponseEntity<String> healthCheck() {
+        return ResponseEntity.ok("Notification Service is running");
+    }
 }
