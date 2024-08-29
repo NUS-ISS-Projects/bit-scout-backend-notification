@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
+@CrossOrigin(origins = "*")  // Allow all origins
 public class NotificationController {
 
     @Autowired
@@ -48,6 +49,7 @@ public class NotificationController {
     // Health check endpoint
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("Notification Service is running");
+        String podName = System.getenv("HOSTNAME");
+        return ResponseEntity.ok("Notification Service is up and running on pod: " + podName);
     }
 }

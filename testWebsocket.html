@@ -17,12 +17,12 @@
         let stompClient;
         
         document.getElementById("connect").onclick = function() {
-            socket = new WebSocket("ws://localhost:8888/notifications");
+            socket = new WebSocket("ws://crypto.local/notifications");
             stompClient = Stomp.over(socket);
             
             stompClient.connect({}, function(frame) {
                 document.getElementById("output").innerText = "Connected to WebSocket!";
-                stompClient.subscribe("/topic/notifications/1", function(message) {
+                stompClient.subscribe("/topic/notifications/2", function(message) {
                     document.getElementById("output").innerText = "Received: " + message.body;
                 });
             });

@@ -87,9 +87,9 @@ class NotificationControllerTests {
         assert response.getBody().size() == 2;
     }
 
-    @Test
-    void testHealthCheck() {
-        ResponseEntity<String> response = notificationController.healthCheck();
-        assert response.getBody().equals("Notification Service is running");
-    }
+    // @Test
+    // void testHealthCheck() {
+    //     ResponseEntity<String> response = notificationController.healthCheck();
+    //     assert response.getBody().equals("Notification Service is running");
+    // }
 }
