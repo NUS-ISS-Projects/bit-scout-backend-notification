@@ -1,5 +1,6 @@
 package com.webapp.notification.consumer;
 
+import org.springframework.context.annotation.Profile;
 import com.webapp.notification.service.NotificationService;
 import com.webapp.notification.service.ThresholdCheckService;
 import com.webapp.notification.dto.PriceUpdateDto;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
+@Profile("!test") // Exclude this bean when the 'test' profile is active
 public class KafkaConsumerService {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
