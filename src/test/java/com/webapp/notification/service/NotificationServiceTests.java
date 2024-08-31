@@ -17,6 +17,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 class NotificationServiceTests {
 
@@ -53,7 +54,7 @@ class NotificationServiceTests {
     }
 
     @Test
-    void createNotificationTest() {
+    void createNotificationTest() throws InterruptedException, ExecutionException {
         when(notificationRepository.save(any(Notification.class))).thenReturn(notification);
 
         NotificationDto result = notificationService.createNotification(notificationDto);
@@ -64,7 +65,7 @@ class NotificationServiceTests {
     }
 
     @Test
-    void updateNotificationTest() {
+    void updateNotificationTest() throws InterruptedException, ExecutionException {
         when(notificationRepository.findById(1L)).thenReturn(Optional.of(notification));
         when(notificationRepository.save(any(Notification.class))).thenReturn(notification);
 
@@ -76,7 +77,7 @@ class NotificationServiceTests {
     }
 
     @Test
-    void deleteNotificationTest() {
+    void deleteNotificationTest() throws InterruptedException, ExecutionException {
         doNothing().when(notificationRepository).deleteById(1L);
 
         notificationService.deleteNotification(1L, 1L);
@@ -85,7 +86,7 @@ class NotificationServiceTests {
     }
 
     @Test
-    void getNotificationsByUserIdTest() {
+    void getNotificationsByUserIdTest() throws InterruptedException, ExecutionException {
         when(notificationRepository.findByUserId(1L)).thenReturn(Arrays.asList(notification));
 
         List<NotificationDto> notifications = notificationService.getNotificationsByUserId(1L);

@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.webapp.notification.controller.NotificationController;
 import com.webapp.notification.dto.NotificationDto;
@@ -34,7 +35,7 @@ class NotificationControllerTests {
     }
 
     @Test
-    void testAddNotification() {
+    void testAddNotification() throws InterruptedException, ExecutionException {
         NotificationDto notificationDto = new NotificationDto();
         notificationDto.setToken("testToken");
         notificationDto.setNotificationType("testType");
@@ -48,7 +49,7 @@ class NotificationControllerTests {
     }
 
     @Test
-    void testEditNotification() {
+    void testEditNotification() throws InterruptedException, ExecutionException {
         NotificationDto notificationDto = new NotificationDto();
         notificationDto.setToken("updatedToken");
 
@@ -62,7 +63,7 @@ class NotificationControllerTests {
     }
 
     @Test
-    void testDeleteNotification() {
+    void testDeleteNotification() throws InterruptedException, ExecutionException {
         ResponseEntity<Void> response = notificationController.deleteNotification(1L, 1L);
 
         verify(notificationService, times(1)).deleteNotification(1L, 1L);
@@ -70,7 +71,7 @@ class NotificationControllerTests {
     }
 
     @Test
-    void testGetNotifications() {
+    void testGetNotifications() throws InterruptedException, ExecutionException {
         NotificationDto notificationDto1 = new NotificationDto();
         notificationDto1.setToken("testToken1");
 
@@ -89,7 +90,7 @@ class NotificationControllerTests {
 
     // @Test
     // void testHealthCheck() {
-    //     ResponseEntity<String> response = notificationController.healthCheck();
-    //     assert response.getBody().equals("Notification Service is running");
+    // ResponseEntity<String> response = notificationController.healthCheck();
+    // assert response.getBody().equals("Notification Service is running");
     // }
 }
