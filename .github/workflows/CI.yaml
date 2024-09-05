@@ -108,7 +108,7 @@ jobs:
     needs: setup-build-deploy
     runs-on: ubuntu-latest
     permissions:
-        contents: read
+        contents: write
         packages: write
     steps:
       - name: checkout
