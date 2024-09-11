@@ -23,7 +23,7 @@ public class FirestoreNotificationService {
 
     public NotificationDto createNotification(NotificationDto notificationDto)
             throws ExecutionException, InterruptedException {
-        String userId = notificationDto.getUserId().toString();
+        String userId = notificationDto.getUserId();
 
         // Save notification to Firestore
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
@@ -34,29 +34,29 @@ public class FirestoreNotificationService {
         return notificationDto; // Optionally return the saved object or confirmation
     }
 
-    public NotificationDto updateNotification(Long userId, NotificationDto notificationDto)
+    public NotificationDto updateNotification(String userId, NotificationDto notificationDto)
             throws ExecutionException, InterruptedException {
         // Update the notification
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId.toString());
+        DocumentReference document = notifications.document(userId);
 
         WriteResult result = document.set(notificationDto).get();
 
         return notificationDto; // Return updated object or confirmation
     }
 
-    public void deleteNotification(Long userId) throws ExecutionException, InterruptedException {
+    public void deleteNotification(String userId) throws ExecutionException, InterruptedException {
         // Delete the notification
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId.toString());
+        DocumentReference document = notifications.document(userId);
 
         document.delete().get();
     }
 
-    public NotificationDto getNotification(Long userId) throws ExecutionException, InterruptedException {
+    public NotificationDto getNotification(String userId) throws ExecutionException, InterruptedException {
         // Retrieve the notification
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId.toString());
+        DocumentReference document = notifications.document(userId);
 
         return document.get().get().toObject(NotificationDto.class);
     }

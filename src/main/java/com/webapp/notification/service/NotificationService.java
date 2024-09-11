@@ -37,7 +37,7 @@ public class NotificationService {
             throws InterruptedException, ExecutionException {
 
         // Save notification to Firestore
-        String userId = notificationDto.getUserId().toString();
+        String userId = notificationDto.getUserId();
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         DocumentReference document = notifications.document(userId);
         WriteResult result = document.set(notificationDto).get();
@@ -53,12 +53,12 @@ public class NotificationService {
         return mapToDto(savedNotification);
     }
 
-    public NotificationDto updateNotification(Long userId, Long notificationId, NotificationDto notificationDto)
+    public NotificationDto updateNotification(String userId, Long notificationId, NotificationDto notificationDto)
             throws InterruptedException, ExecutionException {
 
         // Update the notification in Firestore
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId.toString());
+        DocumentReference document = notifications.document(userId);
         WriteResult result = document.set(notificationDto).get();
 
         Notification notification = notificationRepository.findById(notificationId)
@@ -72,16 +72,16 @@ public class NotificationService {
         return mapToDto(updatedNotification);
     }
 
-    public void deleteNotification(Long userId, Long notificationId) throws InterruptedException, ExecutionException {
+    public void deleteNotification(String userId, Long notificationId) throws InterruptedException, ExecutionException {
         // Delete the notification from Firestore
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId.toString());
+        DocumentReference document = notifications.document(userId);
         document.delete().get();
 
         notificationRepository.deleteById(notificationId);
     }
 
-    public List<NotificationDto> getNotificationsByUserId(Long userId) throws InterruptedException, ExecutionException {
+    public List<NotificationDto> getNotificationsByUserId(String userId) throws InterruptedException, ExecutionException {
 
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         return notifications.get().get().getDocuments().stream()

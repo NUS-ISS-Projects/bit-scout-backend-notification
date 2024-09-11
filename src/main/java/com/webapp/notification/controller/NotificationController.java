@@ -20,7 +20,7 @@ public class NotificationController {
 
     // 3.3 Add Notification
     @PostMapping("/{userId}/add")
-    public ResponseEntity<NotificationDto> addNotification(@PathVariable Long userId,
+    public ResponseEntity<NotificationDto> addNotification(@PathVariable String userId,
             @RequestBody NotificationDto notificationDto) throws InterruptedException, ExecutionException {
         notificationDto.setUserId(userId);
         NotificationDto createdNotification = notificationService.createNotification(notificationDto);
@@ -29,7 +29,7 @@ public class NotificationController {
 
     // 3.4 Edit Notification
     @PutMapping("/{userId}/edit/{id}")
-    public ResponseEntity<NotificationDto> editNotification(@PathVariable Long userId, @PathVariable Long id,
+    public ResponseEntity<NotificationDto> editNotification(@PathVariable String userId, @PathVariable Long id,
             @RequestBody NotificationDto notificationDto) throws InterruptedException, ExecutionException {
         NotificationDto updatedNotification = notificationService.updateNotification(userId, id, notificationDto);
         return ResponseEntity.ok(updatedNotification);
@@ -37,7 +37,7 @@ public class NotificationController {
 
     // 3.5 Delete Notification
     @DeleteMapping("/{userId}/delete/{id}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long userId, @PathVariable Long id)
+    public ResponseEntity<Void> deleteNotification(@PathVariable String userId, @PathVariable Long id)
             throws InterruptedException, ExecutionException {
         notificationService.deleteNotification(userId, id);
         return ResponseEntity.noContent().build();
@@ -45,7 +45,7 @@ public class NotificationController {
 
     // Get all notifications for user
     @GetMapping("/{userId}")
-    public ResponseEntity<List<NotificationDto>> getNotifications(@PathVariable Long userId)
+    public ResponseEntity<List<NotificationDto>> getNotifications(@PathVariable String userId)
             throws InterruptedException, ExecutionException {
         List<NotificationDto> notifications = notificationService.getNotificationsByUserId(userId);
         return ResponseEntity.ok(notifications);

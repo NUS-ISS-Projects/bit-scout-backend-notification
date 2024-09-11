@@ -27,7 +27,7 @@ public class NotificationRepositoryTests {
     @BeforeEach
     public void setUp() {
         notification = new Notification();
-        notification.setUserId(1L);
+        notification.setUserId("1L");
         notification.setToken("BTC");
         notification.setNotificationType("PriceAlert");
         notification.setNotificationValue(45000.0);
@@ -37,7 +37,7 @@ public class NotificationRepositoryTests {
 
     @Test
     public void testFindByUserId() {
-        List<Notification> notifications = notificationRepository.findByUserId(1L);
+        List<Notification> notifications = notificationRepository.findByUserId("1L");
         assertTrue(notifications.size() > 0);
         assertEquals("BTC", notifications.get(0).getToken());
     }
@@ -46,6 +46,6 @@ public class NotificationRepositoryTests {
     public void testFindByToken() {
         List<Notification> notifications = notificationRepository.findByToken("BTC");
         assertTrue(notifications.size() > 0);
-        assertEquals(1L, notifications.get(0).getUserId());
+        assertEquals("1L", notifications.get(0).getUserId());
     }
 }

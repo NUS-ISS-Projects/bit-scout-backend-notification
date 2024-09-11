@@ -1,18 +1,18 @@
 package com.webapp.notification.dto;
 
 public class NotificationDto {
-    private Long userId;
+    private String userId;
     private String token;
     private String notificationType;
     private Double notificationValue;
     private String remarks;
 
     // Getters and Setters
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
