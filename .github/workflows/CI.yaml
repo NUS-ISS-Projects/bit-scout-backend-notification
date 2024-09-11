@@ -118,7 +118,7 @@ jobs:
         run: echo "IMAGE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Retrieve saved jar
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: notification-service-0.0.1-SNAPSHOT.jar
           path: target/
