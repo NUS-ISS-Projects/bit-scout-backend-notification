@@ -22,7 +22,7 @@
             
             stompClient.connect({}, function(frame) {
                 document.getElementById("output").innerText = "Connected to WebSocket!";
-                stompClient.subscribe("/topic/notifications/2", function(message) {
+                stompClient.subscribe("/topic/notifications/KaRF92h8hkS8DODmgYm9B5tlAI93", function(message) {
                     document.getElementById("output").innerText = "Received: " + message.body;
                 });
             });

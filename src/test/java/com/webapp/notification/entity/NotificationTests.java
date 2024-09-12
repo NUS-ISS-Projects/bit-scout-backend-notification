@@ -22,7 +22,7 @@ public class NotificationTests {
 
     @Test
     public void testSetAndGetUserId() {
-        Long userId = 123L;
+        String userId = "123L";
         notification.setUserId(userId);
         assertEquals(userId, notification.getUserId());
     }

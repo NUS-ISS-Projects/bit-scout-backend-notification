@@ -15,7 +15,7 @@ public class NotificationDtoTests {
 
     @Test
     public void testSetAndGetUserId() {
-        Long userId = 1L;
+        String userId = "test";
         notificationDto.setUserId(userId);
         assertEquals(userId, notificationDto.getUserId());
     }

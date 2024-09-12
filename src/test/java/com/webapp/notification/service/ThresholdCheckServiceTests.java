@@ -41,7 +41,7 @@ class ThresholdCheckServiceTests {
         priceUpdateDto.setPrice(60000.0);
 
         notification = new Notification();
-        notification.setUserId(1L);
+        notification.setUserId("1L");
         notification.setToken("BTC");
         notification.setNotificationType("price fall to");
         notification.setNotificationValue(62000.0);
