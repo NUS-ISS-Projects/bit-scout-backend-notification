@@ -1,14 +1,15 @@
 package com.webapp.notification.config;
 
+import com.webapp.notification.service.CryptoPriceWebSocketHandler;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 @EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSocketConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -21,5 +22,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic");
         registry.setApplicationDestinationPrefixes("/app");
     }
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(cryptoPriceWebSocketHandler(), "/ws/crypto-price").setAllowedOrigins("*");
+    }
+
+    @Bean
+    public CryptoPriceWebSocketHandler cryptoPriceWebSocketHandler() {
+        return new CryptoPriceWebSocketHandler();
+    }
+
+
 }
 

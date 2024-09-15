@@ -2,10 +2,13 @@ package com.webapp.notification.controller;
 
 import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.entity.Notification;
+import com.webapp.notification.service.BinanceService;
+import com.webapp.notification.service.BinanceWebSocketClient;
 import com.webapp.notification.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -17,6 +20,34 @@ public class NotificationController {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private BinanceService binanceService;
+
+    private final BinanceWebSocketClient binanceWebSocketClient;
+
+    public NotificationController(BinanceWebSocketClient binanceWebSocketClient) {
+        this.binanceWebSocketClient = binanceWebSocketClient;
+    }
+
+    @PostMapping("/subscribe")
+    public String subscribeCoins(@RequestBody List<String> coinPairs) {
+        binanceWebSocketClient.subscribeToCoins(coinPairs);
+        return "Subscribed to coins: " + coinPairs;
+    }
+
+    @PostMapping("/unsubscribe")
+    public String unsubscribeCoins(@RequestBody List<String> coinPairs) {
+        binanceWebSocketClient.unsubscribeFromCoins(coinPairs);
+        return "Unsubscribed from coins: " + coinPairs;
+    }
+
+    @GetMapping("/search")
+    public Mono<ResponseEntity<String>> searchCoin(@RequestParam String symbol) {
+        return binanceService.searchCoin(symbol)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
 
     // 3.3 Add Notification
     @PostMapping("/{userId}/add")
