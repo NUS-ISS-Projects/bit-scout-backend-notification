@@ -34,7 +34,7 @@ public class KafkaConsumerService {
         try {
             // Deserialize the incoming message
             PriceUpdateDto priceUpdateDto = objectMapper.readValue(message, PriceUpdateDto.class);
-            System.out.println("Received price update: " + priceUpdateDto);
+            // System.out.println("Received price update: " + priceUpdateDto);
 
             // Get the last known price for the token
             Double lastPrice = lastPriceMap.get(priceUpdateDto.getToken());
@@ -47,7 +47,7 @@ public class KafkaConsumerService {
                 // Process the price update
                 thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
             } else {
-                System.out.println("Price change for " + priceUpdateDto.getToken() + " is insignificant, skipping.");
+                // System.out.println("Price change for " + priceUpdateDto.getToken() + " is insignificant, skipping.");
             }
         } catch (Exception e) {
             logger.error("Failed to deserialize message: " + message, e);
