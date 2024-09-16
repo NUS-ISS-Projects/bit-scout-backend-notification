@@ -22,16 +22,17 @@ public class FirestoreNotificationService {
     private static final String COLLECTION_NAME = "notifications";
 
     public NotificationDto createNotification(NotificationDto notificationDto)
-            throws ExecutionException, InterruptedException {
-        String userId = notificationDto.getUserId();
-
-        // Save notification to Firestore
-        CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId);
-
-        WriteResult result = document.set(notificationDto).get();
-
-        return notificationDto; // Optionally return the saved object or confirmation
+        throws ExecutionException, InterruptedException {
+        try {
+            String userId = notificationDto.getUserId();
+            CollectionReference notifications = firestore.collection(COLLECTION_NAME);
+            DocumentReference document = notifications.document(userId);
+            WriteResult result = document.set(notificationDto).get();
+            return notificationDto; // Return the saved object or confirmation
+        } catch (Exception e) {
+            System.err.println("Error saving notification: " + e.getMessage());
+            throw e;
+        }
     }
 
     public NotificationDto updateNotification(String userId, NotificationDto notificationDto)
