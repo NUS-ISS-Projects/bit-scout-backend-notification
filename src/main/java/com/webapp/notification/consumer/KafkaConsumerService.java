@@ -41,6 +41,7 @@ public class KafkaConsumerService {
 
             // Check if the price change is significant
             if (lastPrice == null || hasSignificantChange(lastPrice, priceUpdateDto.getPrice())) {
+                System.out.println("Price change for " + priceUpdateDto.getToken() + " is significant, processing.");
                 // Update the last price in the map
                 lastPriceMap.put(priceUpdateDto.getToken(), priceUpdateDto.getPrice());
 
