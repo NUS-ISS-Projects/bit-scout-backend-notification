@@ -33,7 +33,7 @@ class KafkaConsumerServiceTests {
     }
 
     @Test
-    void testConsumePriceUpdate() {
+    void testConsumePriceUpdateWithSignificantChange() {
         // Create a JSON string to simulate the message received from Kafka
         String jsonMessage = "{\"token\":\"BTC\",\"price\":60000.0}";
 
@@ -48,5 +48,19 @@ class KafkaConsumerServiceTests {
         PriceUpdateDto capturedDto = captor.getValue();
         assertEquals("BTC", capturedDto.getToken());
         assertEquals(60000.0, capturedDto.getPrice());
+    }
+
+    @Test
+    void testConsumePriceUpdateWithInsignificantChange() {
+        // Initial price update
+        String initialJsonMessage = "{\"token\":\"BTC\",\"price\":60000.0}";
+        kafkaConsumerService.consumePriceUpdate(initialJsonMessage);
+
+        // Another price update with an insignificant change
+        String insignificantChangeJsonMessage = "{\"token\":\"BTC\",\"price\":60000.05}";
+        kafkaConsumerService.consumePriceUpdate(insignificantChangeJsonMessage);
+
+        // Only one significant price update should trigger the threshold check
+        verify(thresholdCheckService, times(1)).checkThresholdsForAllUsers(forClass(PriceUpdateDto.class).capture());
     }
 }
