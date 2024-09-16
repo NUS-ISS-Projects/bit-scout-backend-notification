@@ -33,11 +33,11 @@ class KafkaConsumerServiceTests {
         PriceUpdateDto priceUpdateDto = new PriceUpdateDto();
         priceUpdateDto.setToken("BTC");
         priceUpdateDto.setPrice(60000.0);
-        
-        ConsumerRecord<String, PriceUpdateDto> record = new ConsumerRecord<>("price-updates", 0, 0L, null, priceUpdateDto);
-        
-        kafkaConsumerService.consumePriceUpdate(record);
-        
+
+        // Instead of passing a ConsumerRecord, pass just the PriceUpdateDto
+        kafkaConsumerService.consumePriceUpdate(priceUpdateDto);
+
+        // Verify the correct interactions
         verify(thresholdCheckService, times(1)).checkThresholdsForAllUsers(priceUpdateDto);
     }
 }

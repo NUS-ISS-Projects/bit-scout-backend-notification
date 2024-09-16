@@ -25,12 +25,10 @@ public class KafkaConsumerService {
 
     // Kafka listener to consume messages from the "price-updates" topic
     @KafkaListener(topics = "price-updates", groupId = "notification-service")
-    public void consumePriceUpdate(ConsumerRecord<String, PriceUpdateDto> record) {
-        PriceUpdateDto priceUpdate = record.value();
+    public void consumePriceUpdate(PriceUpdateDto priceUpdateDto) {
+        System.out.println("Received price update: " + priceUpdateDto);
         
-        logger.info("Received price update for token {}: {}", priceUpdate.getToken(), priceUpdate.getPrice());
-        
-        // Process the price update and check against stored thresholds
-        thresholdCheckService.checkThresholdsForAllUsers(priceUpdate);
+        // Process the price update and check thresholds
+        thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
     }
 }
