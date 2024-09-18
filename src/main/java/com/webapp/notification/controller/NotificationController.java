@@ -1,7 +1,6 @@
 package com.webapp.notification.controller;
 
 import com.webapp.notification.dto.NotificationDto;
-import com.webapp.notification.entity.Notification;
 import com.webapp.notification.service.NotificationService;
 import com.webapp.notification.service.UserService;
 
@@ -66,7 +65,7 @@ public class NotificationController {
     }
 
     // Get all notifications for user
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<List<NotificationDto>> getNotifications(@RequestHeader("Authorization") String token)
             throws InterruptedException, ExecutionException {
         String userId = userService.validateTokenAndGetUserId(token);
