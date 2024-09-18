@@ -23,9 +23,8 @@ public class ThresholdCheckService {
 
     private static final String COLLECTION_NAME = "notifications";
 
-    // Accept price updates from Kafka and check thresholds for each user
     public void checkThresholdsForAllUsers(PriceUpdateDto priceUpdate) throws InterruptedException, ExecutionException {
-        // Query Firestore for notifications by token (equivalent to findByToken in JPA)
+        // Query Firestore for notifications by token
         CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
         ApiFuture<QuerySnapshot> future = notificationsCollection
                 .whereEqualTo("token", priceUpdate.getToken())  // Firestore query
@@ -37,7 +36,7 @@ public class ThresholdCheckService {
                 .map(doc -> doc.toObject(Notification.class))
                 .collect(Collectors.toList());
 
-        // For each notification, check if the price condition is met
+        // Check if the price condition is met
         for (Notification notification : notifications) {
             if (isThresholdReached(notification, priceUpdate.getPrice())) {
                 notifyUser(notification);
@@ -63,11 +62,11 @@ public class ThresholdCheckService {
     // Notify the user by sending the notification
     private void notifyUser(Notification notification) {
         NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setUserId(notification.getUserId());  // Use userId from the notification entity
+        notificationDto.setUserId(notification.getUserId());
         notificationDto.setRemarks("Price " + notification.getNotificationType() + " " +
                 notification.getNotificationValue() + " for token " + notification.getToken());
 
-        // Send the notification using the existing service
+        // Send the notification using the NotificationService
         notificationService.sendNotification(notificationDto);
     }
 }

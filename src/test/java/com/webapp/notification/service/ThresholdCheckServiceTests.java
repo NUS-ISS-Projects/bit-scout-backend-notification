@@ -1,14 +1,13 @@
 package com.webapp.notification.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import com.webapp.notification.dto.NotificationDto;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.api.core.ApiFuture;
 import com.webapp.notification.dto.PriceUpdateDto;
 import com.webapp.notification.entity.Notification;
-import com.webapp.notification.repository.NotificationRepository;
-import com.webapp.notification.service.NotificationService;
-import com.webapp.notification.service.ThresholdCheckService;
+import com.webapp.notification.dto.NotificationDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,11 +16,24 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class ThresholdCheckServiceTests {
 
     @Mock
-    private NotificationRepository notificationRepository;
+    private Firestore firestore;
+
+    @Mock
+    private CollectionReference collectionReference;
+
+    @Mock
+    private ApiFuture<QuerySnapshot> querySnapshotFuture;
+
+    @Mock
+    private QuerySnapshot querySnapshot;
 
     @Mock
     private NotificationService notificationService;
@@ -33,7 +45,7 @@ class ThresholdCheckServiceTests {
     private Notification notification;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ExecutionException, InterruptedException {
         MockitoAnnotations.openMocks(this);
 
         priceUpdateDto = new PriceUpdateDto();
@@ -45,11 +57,21 @@ class ThresholdCheckServiceTests {
         notification.setToken("BTC");
         notification.setNotificationType("price fall to");
         notification.setNotificationValue(62000.0);
+
+        // Mock Firestore behavior
+        when(firestore.collection(anyString())).thenReturn(collectionReference);
+        when(collectionReference.whereEqualTo(anyString(), anyString())).thenReturn(collectionReference);
+        when(collectionReference.get()).thenReturn(querySnapshotFuture);
+        when(querySnapshotFuture.get()).thenReturn(querySnapshot);
+        when(querySnapshot.getDocuments()).thenReturn(Arrays.asList());  // Mock empty list for test
     }
 
     @Test
-    void checkThresholdsForAllUsers_PriceFallReached_ShouldNotifyUser() {
-        when(notificationRepository.findByToken("BTC")).thenReturn(Arrays.asList(notification));
+    void checkThresholdsForAllUsers_PriceFallReached_ShouldNotifyUser() throws InterruptedException, ExecutionException {
+        // Mock Firestore returning a notification
+        QueryDocumentSnapshot documentSnapshot = mock(QueryDocumentSnapshot.class);
+        when(documentSnapshot.toObject(Notification.class)).thenReturn(notification);
+        when(querySnapshot.getDocuments()).thenReturn(Arrays.asList(documentSnapshot));
 
         thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
 
@@ -57,11 +79,13 @@ class ThresholdCheckServiceTests {
     }
 
     @Test
-    void checkThresholdsForAllUsers_PriceRiseReached_ShouldNotNotifyUser() {
+    void checkThresholdsForAllUsers_PriceRiseReached_ShouldNotNotifyUser() throws InterruptedException, ExecutionException {
         notification.setNotificationType("price rise to");
         notification.setNotificationValue(65000.0);
 
-        when(notificationRepository.findByToken("BTC")).thenReturn(Arrays.asList(notification));
+        QueryDocumentSnapshot documentSnapshot = mock(QueryDocumentSnapshot.class);
+        when(documentSnapshot.toObject(Notification.class)).thenReturn(notification);
+        when(querySnapshot.getDocuments()).thenReturn(Arrays.asList(documentSnapshot));
 
         thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
 
@@ -69,26 +93,12 @@ class ThresholdCheckServiceTests {
     }
 
     @Test
-    void checkThresholdsForAllUsers_NoNotifications_ShouldNotNotifyUser() {
-        when(notificationRepository.findByToken("BTC")).thenReturn(Arrays.asList());
+    void checkThresholdsForAllUsers_NoNotifications_ShouldNotNotifyUser() throws InterruptedException, ExecutionException {
+        // No documents should be returned
+        when(querySnapshot.getDocuments()).thenReturn(Arrays.asList());
 
         thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
 
         verify(notificationService, times(0)).sendNotification(any(NotificationDto.class));
-    }
-
-    @Test
-    void isThresholdReached_PriceFallReached_ShouldReturnTrue() {
-        boolean result = thresholdCheckService.isThresholdReached(notification, 60000.0);
-        assertTrue(result);
-    }
-
-    @Test
-    void isThresholdReached_PriceRiseNotReached_ShouldReturnFalse() {
-        notification.setNotificationType("price rise to");
-        notification.setNotificationValue(65000.0);
-
-        boolean result = thresholdCheckService.isThresholdReached(notification, 60000.0);
-        assertFalse(result);
     }
 }
