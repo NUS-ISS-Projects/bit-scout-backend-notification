@@ -20,6 +20,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String validateTokenAndGetUserId(String token) {
+        // Remove "Bearer " from the token if present
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7); // Remove the "Bearer " part
+        }
+        
         String url = accountUrl + token;
         System.out.println("URL: " + url);
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
