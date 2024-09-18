@@ -21,7 +21,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public String validateTokenAndGetUserId(String token) {
         String url = accountUrl + token;
+        System.out.println("URL: " + url);
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+        System.out.println("Response: " + response);
 
         if (response.getStatusCode().is2xxSuccessful()) {
             return Objects.requireNonNull(response.getBody());
