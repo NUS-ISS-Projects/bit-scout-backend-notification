@@ -24,23 +24,44 @@ public class ThresholdCheckService {
     private static final String COLLECTION_NAME = "notifications";
 
     public void checkThresholdsForAllUsers(PriceUpdateDto priceUpdate) throws InterruptedException, ExecutionException {
+        System.out.println("Checking thresholds for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
+
         // Query Firestore for notifications by token
         CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
         ApiFuture<QuerySnapshot> future = notificationsCollection
                 .whereEqualTo("token", priceUpdate.getToken())  // Firestore query
                 .get();
 
-        // Process the notifications
-        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-        List<Notification> notifications = documents.stream()
-                .map(doc -> doc.toObject(Notification.class))
-                .collect(Collectors.toList());
+        try {
+            // Process the notifications
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+            System.out.println("Found " + documents.size() + " notifications for token " + priceUpdate.getToken());
 
-        // Check if the price condition is met
-        for (Notification notification : notifications) {
-            if (isThresholdReached(notification, priceUpdate.getPrice())) {
-                notifyUser(notification);
+            if (documents.isEmpty()) {
+                System.out.println("No notifications found for token " + priceUpdate.getToken());
             }
+
+            List<Notification> notifications = documents.stream()
+                    .map(doc -> {
+                        Notification notification = doc.toObject(Notification.class);
+                        System.out.println("Processing notification: " + notification);
+                        return notification;
+                    })
+                    .collect(Collectors.toList());
+
+            // Check if the price condition is met
+            for (Notification notification : notifications) {
+                if (isThresholdReached(notification, priceUpdate.getPrice())) {
+                    System.out.println("Threshold met for notification: " + notification);
+                    notifyUser(notification);
+                } else {
+                    System.out.println("Threshold not met for notification: " + notification);
+                }
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            System.err.println("Error fetching notifications from Firestore for token: " + priceUpdate.getToken());
+            e.printStackTrace();
+            throw e;  // rethrow the exception to maintain original behavior
         }
     }
 
@@ -48,15 +69,22 @@ public class ThresholdCheckService {
     public boolean isThresholdReached(Notification notification, Double currentPrice) {
         String type = notification.getNotificationType();
         double notificationValue = notification.getNotificationValue();
+        boolean thresholdReached = false;
 
         switch (type.toLowerCase()) {
             case "price fall to":
-                return currentPrice <= notificationValue;
+                thresholdReached = currentPrice <= notificationValue;
+                System.out.println("Price fall to check: currentPrice=" + currentPrice + " <= notificationValue=" + notificationValue + " : " + thresholdReached);
+                break;
             case "price rise to":
-                return currentPrice >= notificationValue;
+                thresholdReached = currentPrice >= notificationValue;
+                System.out.println("Price rise to check: currentPrice=" + currentPrice + " >= notificationValue=" + notificationValue + " : " + thresholdReached);
+                break;
             default:
-                return false;
+                System.out.println("Unknown notification type: " + type);
+                break;
         }
+        return thresholdReached;
     }
 
     // Notify the user by sending the notification
@@ -66,7 +94,9 @@ public class ThresholdCheckService {
         notificationDto.setRemarks("Price " + notification.getNotificationType() + " " +
                 notification.getNotificationValue() + " for token " + notification.getToken());
 
+        System.out.println("Sending notification to user: " + notificationDto.getUserId());
         // Send the notification using the NotificationService
         notificationService.sendNotification(notificationDto);
+        System.out.println("Notification sent to user: " + notificationDto.getUserId());
     }
 }
