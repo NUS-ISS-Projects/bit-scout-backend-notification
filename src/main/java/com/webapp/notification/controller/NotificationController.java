@@ -65,7 +65,7 @@ public class NotificationController {
     }
 
     // Get all notifications for user
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<List<NotificationDto>> getNotifications(@RequestHeader("Authorization") String token)
             throws InterruptedException, ExecutionException {
         String userId = userService.validateTokenAndGetUserId(token);
