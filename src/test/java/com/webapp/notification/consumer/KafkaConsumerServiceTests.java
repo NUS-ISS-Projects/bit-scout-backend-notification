@@ -1,6 +1,9 @@
 package com.webapp.notification.consumer;
 
 import static org.mockito.Mockito.verify;
+
+import java.util.concurrent.ExecutionException;
+
 import static org.mockito.Mockito.times;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +36,7 @@ class KafkaConsumerServiceTests {
     }
 
     @Test
-    void testConsumePriceUpdateWithSignificantChange() {
+    void testConsumePriceUpdateWithSignificantChange() throws InterruptedException, ExecutionException {
         // Create a JSON string to simulate the message received from Kafka
         String jsonMessage = "{\"token\":\"BTC\",\"price\":60000.0}";
 
@@ -51,7 +54,7 @@ class KafkaConsumerServiceTests {
     }
 
     @Test
-    void testConsumePriceUpdateWithInsignificantChange() {
+    void testConsumePriceUpdateWithInsignificantChange() throws InterruptedException, ExecutionException {
         // Initial price update
         String initialJsonMessage = "{\"token\":\"BTC\",\"price\":60000.0}";
         kafkaConsumerService.consumePriceUpdate(initialJsonMessage);
