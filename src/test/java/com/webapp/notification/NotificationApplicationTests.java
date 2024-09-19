@@ -3,7 +3,7 @@ package com.webapp.notification;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(properties = "spring.profiles.active=test")
+@SpringBootTest(properties = "spring.profiles.active=test", webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class NotificationApplicationTests {
 
 	@Test
