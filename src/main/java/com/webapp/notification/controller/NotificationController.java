@@ -4,6 +4,10 @@ import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.service.NotificationService;
 import com.webapp.notification.service.UserService;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @CrossOrigin(origins = "*") // Allow all origins
+@Api(tags = "Notification Controller", description = "Endpoints for managing notifications")
 public class NotificationController {
 
     @Autowired
@@ -23,7 +28,11 @@ public class NotificationController {
     @Autowired
     private UserService userService;
 
-    // 3.3 Add Notification
+    @ApiOperation(value = "Add a new notification", notes = "Create a new notification for the user")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Notification added successfully"),
+        @ApiResponse(code = 401, message = "Unauthorized")
+    })
     @PostMapping("/add")
     public ResponseEntity<NotificationDto> addNotification(@RequestHeader("Authorization") String token,
             @RequestBody NotificationDto notificationDto)
@@ -37,7 +46,12 @@ public class NotificationController {
         return ResponseEntity.ok(createdNotification);
     }
 
-    // 3.4 Edit Notification
+    @ApiOperation(value = "Edit an existing notification", notes = "Update an existing notification")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Notification updated successfully"),
+        @ApiResponse(code = 401, message = "Unauthorized"),
+        @ApiResponse(code = 404, message = "Notification not found")
+    })
     @PutMapping("/edit/{id}")
     public ResponseEntity<NotificationDto> editNotification(@RequestHeader("Authorization") String token,
             @PathVariable Long id,
@@ -51,7 +65,12 @@ public class NotificationController {
         return ResponseEntity.ok(updatedNotification);
     }
 
-    // 3.5 Delete Notification
+    @ApiOperation(value = "Delete a notification", notes = "Delete a notification for the user")
+    @ApiResponses({
+        @ApiResponse(code = 204, message = "Notification deleted successfully"),
+        @ApiResponse(code = 401, message = "Unauthorized"),
+        @ApiResponse(code = 404, message = "Notification not found")
+    })
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteNotification(@RequestHeader("Authorization") String token,
             @PathVariable Long id)
@@ -64,7 +83,11 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    // Get all notifications for user
+    @ApiOperation(value = "Get all notifications", notes = "Retrieve all notifications for the user")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Notifications retrieved successfully"),
+        @ApiResponse(code = 401, message = "Unauthorized")
+    })
     @GetMapping("/list")
     public ResponseEntity<List<NotificationDto>> getNotifications(@RequestHeader("Authorization") String token)
             throws InterruptedException, ExecutionException {
@@ -76,7 +99,10 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    // Health check endpoint
+    @ApiOperation(value = "Health check", notes = "Check if the service is running")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Service is running")
+    })
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
         String podName = System.getenv("HOSTNAME");
