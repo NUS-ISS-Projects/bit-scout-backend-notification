@@ -4,10 +4,12 @@ import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.service.NotificationService;
 import com.webapp.notification.service.UserService;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +21,6 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @CrossOrigin(origins = "*") // Allow all origins
-@Api(tags = "Notification Controller", description = "Endpoints for managing notifications")
 public class NotificationController {
 
     @Autowired
@@ -28,10 +29,12 @@ public class NotificationController {
     @Autowired
     private UserService userService;
 
-    @ApiOperation(value = "Add a new notification", notes = "Create a new notification for the user")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Notification added successfully"),
-        @ApiResponse(code = 401, message = "Unauthorized")
+    // 3.3 Add Notification
+    @Operation(summary = "Add a new notification", description = "Adds a new notification for the user.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Notification created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = NotificationDto.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized access")
     })
     @PostMapping("/add")
     public ResponseEntity<NotificationDto> addNotification(@RequestHeader("Authorization") String token,
@@ -46,11 +49,13 @@ public class NotificationController {
         return ResponseEntity.ok(createdNotification);
     }
 
-    @ApiOperation(value = "Edit an existing notification", notes = "Update an existing notification")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Notification updated successfully"),
-        @ApiResponse(code = 401, message = "Unauthorized"),
-        @ApiResponse(code = 404, message = "Notification not found")
+    // 3.4 Edit Notification
+    @Operation(summary = "Edit a notification", description = "Edits an existing notification for the user.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Notification updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = NotificationDto.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        @ApiResponse(responseCode = "404", description = "Notification not found")
     })
     @PutMapping("/edit/{id}")
     public ResponseEntity<NotificationDto> editNotification(@RequestHeader("Authorization") String token,
@@ -65,11 +70,12 @@ public class NotificationController {
         return ResponseEntity.ok(updatedNotification);
     }
 
-    @ApiOperation(value = "Delete a notification", notes = "Delete a notification for the user")
-    @ApiResponses({
-        @ApiResponse(code = 204, message = "Notification deleted successfully"),
-        @ApiResponse(code = 401, message = "Unauthorized"),
-        @ApiResponse(code = 404, message = "Notification not found")
+    // 3.5 Delete Notification
+    @Operation(summary = "Delete a notification", description = "Deletes a notification by ID for the user.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Notification deleted successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        @ApiResponse(responseCode = "404", description = "Notification not found")
     })
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteNotification(@RequestHeader("Authorization") String token,
@@ -83,10 +89,12 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @ApiOperation(value = "Get all notifications", notes = "Retrieve all notifications for the user")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Notifications retrieved successfully"),
-        @ApiResponse(code = 401, message = "Unauthorized")
+    // Get all notifications for user
+    @Operation(summary = "List notifications", description = "Fetches all notifications for the user.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "List of notifications",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = NotificationDto.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized access")
     })
     @GetMapping("/list")
     public ResponseEntity<List<NotificationDto>> getNotifications(@RequestHeader("Authorization") String token)
@@ -99,9 +107,10 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    @ApiOperation(value = "Health check", notes = "Check if the service is running")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Service is running")
+    // Health check endpoint
+    @Operation(summary = "Health check", description = "Checks the health of the Notification service.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Service is up and running")
     })
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
