@@ -207,6 +207,9 @@ public class NotificationService {
     }
 
     private NotificationDto mapToDto(Notification notification) {
+        if (notification == null) {
+            return null; // Handle null case
+        }
         System.out.println("Mapping Notification entity to DTO for userId: " + notification.getUserId());
         NotificationDto dto = new NotificationDto();
         dto.setUserId(notification.getUserId());

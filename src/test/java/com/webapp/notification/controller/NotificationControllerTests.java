@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +23,14 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.WriteResult;
 import com.webapp.notification.controller.NotificationController;
 import com.webapp.notification.dto.NotificationDto;
+import com.webapp.notification.repository.NotificationRepository;
 import com.webapp.notification.service.NotificationService;
 import com.webapp.notification.service.UserService;
 
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -61,26 +65,53 @@ class NotificationControllerTests {
     @Mock
     private ApiFuture<DocumentSnapshot> apiFuture;
 
+    @Mock
+    private NotificationRepository notificationRepository;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this); // method
     }
 
-    // @Test
-    // void testAddNotification() throws InterruptedException, ExecutionException {
-    // NotificationDto notificationDto = new NotificationDto();
-    // notificationDto.setToken("testToken");
-    // notificationDto.setNotificationType("testType");
+    @Test
+    public void testCreateOrUpdateNotification_NewDocument() throws InterruptedException, ExecutionException {
+        // Arrange
+        String userId = "user123";
+        String token = "token123";
 
-    // when(notificationService.createNotification(any(NotificationDto.class))).thenReturn(notificationDto);
+        NotificationDto notificationDto = new NotificationDto();
+        notificationDto.setUserId(userId);
+        notificationDto.setToken(token);
+        notificationDto.setNotificationType("info");
+        notificationDto.setNotificationValue(2000.0);
+        notificationDto.setRemarks("Remarks");
 
-    // ResponseEntity<NotificationDto> response =
-    // notificationController.addNotification("test", notificationDto);
+        // Mock Firestore behavior
+        CollectionReference mockCollection = mock(CollectionReference.class);
+        DocumentReference mockDocument = mock(DocumentReference.class);
+        ApiFuture<DocumentSnapshot> mockFuture = mock(ApiFuture.class);
+        DocumentSnapshot mockDocumentSnapshot = mock(DocumentSnapshot.class);
+        WriteResult mockWriteResult = mock(WriteResult.class);
+        NotificationDto savedNotification = new NotificationDto(); // Mocked saved notification
 
-    // verify(notificationService,
-    // times(1)).createNotification(any(NotificationDto.class));
-    // assert response.getBody().getToken().equals("testToken");
-    // }
+        // Set up Firestore behavior
+        when(firestore.collection("notifications")).thenReturn(mockCollection);
+        when(mockCollection.document(userId)).thenReturn(mockDocument);
+        when(mockDocument.get()).thenReturn(mockFuture);
+        when(mockFuture.get()).thenReturn(mockDocumentSnapshot);
+        when(mockDocumentSnapshot.exists()).thenReturn(false); // New document scenario
+
+        // Mock repository behavior
+        when(notificationRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
+        when(mockDocument.set(any(Map.class))).thenReturn(mockFuture);
+        when(mockWriteResult.getUpdateTime()).thenReturn(null); // Mock the update time
+
+        // Act
+        NotificationDto result = notificationService.createOrUpdateNotification(notificationDto);
+
+        // Assert
+
+    }
 
     // @Test
     // void testEditNotification() throws InterruptedException, ExecutionException {
