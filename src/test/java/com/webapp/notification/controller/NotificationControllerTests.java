@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
@@ -128,21 +129,25 @@ class NotificationControllerTests {
     void getNotificationsByUserIdTest() throws InterruptedException, ExecutionException {
         String userId = "testUserId";
 
-        // Mock the behavior of DocumentReference
-        when(documentReference.get()).thenReturn(ApiFutures.immediateFuture(documentSnapshot));
+        // Mock the behavior of DocumentReference to return a valid DocumentSnapshot
+        ApiFuture<DocumentSnapshot> future = mock(ApiFuture.class);
+        when(future.get()).thenReturn(documentSnapshot);
+        when(documentReference.get()).thenReturn(future);
+
+        // Mock the DocumentSnapshot to simulate that it exists
         when(documentSnapshot.exists()).thenReturn(true);
 
-        // Set up your NotificationDto or whatever you're retrieving from Firestore
+        // Create a mock NotificationDto
         NotificationDto notificationDto = new NotificationDto();
         notificationDto.setUserId(userId);
-        List<NotificationDto> expectedNotifications = List.of(notificationDto);
 
-        // Mock the Firestore query result to return your expected list
-        when(notificationService.getNotificationsByUserId(userId)).thenReturn(expectedNotifications);
+        // Simulate returning a list of notifications
+        when(notificationService.getNotificationsByUserId(userId)).thenReturn(List.of(notificationDto));
 
+        // Call the method under test
         List<NotificationDto> notifications = notificationService.getNotificationsByUserId(userId);
 
-        // Assertions to verify the results
+        // Assertions
         assertNotNull(notifications);
         assertEquals(1, notifications.size());
         assertEquals(userId, notifications.get(0).getUserId());
