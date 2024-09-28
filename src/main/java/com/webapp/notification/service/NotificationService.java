@@ -47,26 +47,33 @@ public class NotificationService {
         String userId = notificationDto.getUserId();
         String token = notificationDto.getToken();
 
+        System.out.println("Starting createOrUpdateNotification for user: " + userId + " with token: " + token);
+
         // Firestore reference
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         DocumentReference document = notifications.document(userId);
 
         // Retrieve the document from Firestore
+        System.out.println("Fetching document for userId: " + userId);
         ApiFuture<DocumentSnapshot> future = document.get();
         DocumentSnapshot documentSnapshot = future.get();
+        System.out.println("Document found: " + documentSnapshot.exists());
 
         Map<String, Object> notificationData;
         if (documentSnapshot.exists()) {
             // Document exists, update or add the coin information
             notificationData = documentSnapshot.getData();
+            System.out.println("Updating existing document for token: " + token);
 
             // Check if token already exists and update its values
             if (notificationData.containsKey(token)) {
                 Map<String, Object> tokenData = (Map<String, Object>) notificationData.get(token);
+                System.out.println("Token data exists, updating values for token: " + token);
                 tokenData.put("notificationType", notificationDto.getNotificationType());
                 tokenData.put("notificationValue", notificationDto.getNotificationValue());
                 tokenData.put("remarks", notificationDto.getRemarks());
             } else {
+                System.out.println("Adding new token data for token: " + token);
                 // Add new token data
                 Map<String, Object> tokenData = new HashMap<>();
                 tokenData.put("notificationType", notificationDto.getNotificationType());
@@ -75,6 +82,7 @@ public class NotificationService {
                 notificationData.put(token, tokenData);
             }
         } else {
+            System.out.println("Document does not exist, creating new document for userId: " + userId);
             // Document does not exist, create new document with the notification data
             notificationData = new HashMap<>();
             Map<String, Object> tokenData = new HashMap<>();
@@ -86,12 +94,15 @@ public class NotificationService {
         }
 
         // Save the updated or new document to Firestore
+        System.out.println("Saving document to Firestore for userId: " + userId);
         WriteResult result = document.set(notificationData).get();
+        System.out.println("Document saved successfully, update time: " + result.getUpdateTime());
 
         // Update or create notification in the repository
         List<Notification> existingNotifications = notificationRepository.findByUserId(userId);
         Notification notification;
         if (!existingNotifications.isEmpty()) {
+            System.out.println("Existing notification found for userId: " + userId + ", updating it.");
             // Update the first existing notification
             notification = existingNotifications.get(0);
             notification.setNotificationType(notificationDto.getNotificationType());
@@ -99,6 +110,7 @@ public class NotificationService {
             notification.setRemarks(notificationDto.getRemarks());
             notification.setToken(notificationDto.getToken());
         } else {
+            System.out.println("No existing notification found for userId: " + userId + ", creating new notification.");
             // Create new notification object
             notification = new Notification();
             notification.setUserId(userId);
@@ -110,32 +122,39 @@ public class NotificationService {
 
         // Save the notification to the repository
         Notification savedNotification = notificationRepository.save(notification);
+        System.out.println("Notification saved to repository for userId: " + userId);
+
         return mapToDto(savedNotification);
     }
 
     public void deleteNotification(String userId, Long notificationId) throws InterruptedException, ExecutionException {
+        System.out.println("Deleting notification with ID: " + notificationId + " for userId: " + userId);
         // Delete the notification from Firestore
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         DocumentReference document = notifications.document(userId);
         document.delete().get();
 
         notificationRepository.deleteById(notificationId);
+        System.out.println("Notification deleted successfully.");
     }
 
     public List<NotificationDto> getNotificationsByUserId(String userId)
             throws InterruptedException, ExecutionException {
+        System.out.println("Fetching notifications for userId: " + userId);
         DocumentReference document = firestore.collection(COLLECTION_NAME).document(userId);
 
         // Fetch the user document
         DocumentSnapshot documentSnapshot = document.get().get();
 
         if (documentSnapshot.exists()) {
+            System.out.println("Document found for userId: " + userId);
             Map<String, Object> data = documentSnapshot.getData();
             List<NotificationDto> notifications = new ArrayList<>();
 
             // Iterate through the data entries to find notifications
             for (Map.Entry<String, Object> entry : data.entrySet()) {
                 String token = entry.getKey(); // This is the notification key (e.g., "btcjy", "ethusdt")
+                System.out.println("Processing notification for token: " + token);
 
                 // Check if the entry value is a map (notification data)
                 if (entry.getValue() instanceof Map) {
@@ -146,10 +165,8 @@ public class NotificationService {
                     notificationDto.setUserId(userId); // Set userId from the parameter
                     notificationDto.setToken(token); // Use the entry key as the token
                     notificationDto.setNotificationType((String) notificationData.get("notificationType"));
-                    notificationDto
-                            .setNotificationValue(((Number) notificationData.get("notificationValue")).doubleValue()); // Convert
-                                                                                                                       // to
-                                                                                                                       // Double
+                    notificationDto.setNotificationValue(
+                            ((Number) notificationData.get("notificationValue")).doubleValue()); // Convert to Double
                     notificationDto.setRemarks((String) notificationData.get("remarks"));
 
                     // Add the notification to the list
@@ -165,6 +182,7 @@ public class NotificationService {
     }
 
     private NotificationDto mapToDto(Notification notification) {
+        System.out.println("Mapping Notification entity to DTO for userId: " + notification.getUserId());
         NotificationDto dto = new NotificationDto();
         dto.setUserId(notification.getUserId());
         dto.setToken(notification.getToken());
@@ -175,8 +193,12 @@ public class NotificationService {
     }
 
     public void sendNotification(NotificationDto notificationDto) {
-        System.out.println(
-                "Notification sent to user " + notificationDto.getUserId() + ": " + notificationDto.getRemarks());
+        System.out.println("Sending notification to user " + notificationDto.getUserId());
+        System.out.println("Notification details: Token=" + notificationDto.getToken() +
+                           ", Type=" + notificationDto.getNotificationType() +
+                           ", Value=" + notificationDto.getNotificationValue() +
+                           ", Remarks=" + notificationDto.getRemarks());
+
         // Send WebSocket Notification
         sendWebSocketNotification(notificationDto);
     }
@@ -185,6 +207,6 @@ public class NotificationService {
     private void sendWebSocketNotification(NotificationDto notificationDto) {
         String destination = "/topic/notifications/" + notificationDto.getUserId();
         messagingTemplate.convertAndSend(destination, notificationDto);
-        System.out.println("WebSocket Notification sent to user " + notificationDto.getUserId());
+        System.out.println("WebSocket Notification sent to user " + notificationDto.getUserId() + " at destination " + destination);
     }
 }

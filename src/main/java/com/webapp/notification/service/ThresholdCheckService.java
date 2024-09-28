@@ -4,13 +4,12 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.dto.PriceUpdateDto;
-import com.webapp.notification.entity.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Service
 public class ThresholdCheckService {
@@ -24,79 +23,76 @@ public class ThresholdCheckService {
     private static final String COLLECTION_NAME = "notifications";
 
     public void checkThresholdsForAllUsers(PriceUpdateDto priceUpdate) throws InterruptedException, ExecutionException {
-        System.out.println("Checking thresholds for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
+        System.out.println("Starting threshold check for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
 
-        // Query Firestore for notifications by token
+        // Fetching all notifications from Firestore
         CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
-        ApiFuture<QuerySnapshot> future = notificationsCollection
-                .whereEqualTo("token", priceUpdate.getToken())  // Firestore query
-                .get();
+        ApiFuture<QuerySnapshot> future = notificationsCollection.get();
+        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+        System.out.println("Total users with notifications: " + documents.size());
 
-        try {
-            // Process the notifications
-            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-            System.out.println("Found " + documents.size() + " notifications for token " + priceUpdate.getToken());
+        for (QueryDocumentSnapshot document : documents) {
+            Map<String, Object> data = document.getData();
+            System.out.println("Processing userId: " + document.getId());
 
-            if (documents.isEmpty()) {
-                System.out.println("No notifications found for token " + priceUpdate.getToken());
-            }
+            // Looking for the token within user's notifications
+            String tokenKey = priceUpdate.getToken().toLowerCase() + "usdt";
+            System.out.println("Looking for token: " + tokenKey + " in user's notifications.");
 
-            List<Notification> notifications = documents.stream()
-                    .map(doc -> {
-                        Notification notification = doc.toObject(Notification.class);
-                        System.out.println("Processing notification: " + notification);
-                        return notification;
-                    })
-                    .collect(Collectors.toList());
+            if (data.containsKey(tokenKey)) {
+                Map<String, Object> tokenData = (Map<String, Object>) data.get(tokenKey);
+                double thresholdPrice = ((Number) tokenData.get("notificationValue")).doubleValue();
+                String type = (String) tokenData.get("notificationType");
 
-            // Check if the price condition is met
-            for (Notification notification : notifications) {
-                if (isThresholdReached(notification, priceUpdate.getPrice())) {
-                    System.out.println("Threshold met for notification: " + notification);
-                    notifyUser(notification);
+                System.out.println("Token found. Type: " + type + ", Threshold Price: " + thresholdPrice);
+
+                boolean thresholdReached = checkThreshold(type, priceUpdate.getPrice(), thresholdPrice);
+                System.out.println("Threshold reached for userId: " + document.getId() + " -> " + thresholdReached);
+
+                if (thresholdReached) {
+                    System.out.println("Notifying userId: " + document.getId() + " as threshold is met.");
+                    notifyUser(document.getId(), priceUpdate.getToken(), type, thresholdPrice, priceUpdate.getPrice(), (String) tokenData.get("remarks"));
                 } else {
-                    System.out.println("Threshold not met for notification: " + notification);
+                    System.out.println("No notification for userId: " + document.getId() + " as threshold is not met.");
                 }
+            } else {
+                System.out.println("Token: " + tokenKey + " not found for userId: " + document.getId());
             }
-        } catch (ExecutionException | InterruptedException e) {
-            System.err.println("Error fetching notifications from Firestore for token: " + priceUpdate.getToken());
-            e.printStackTrace();
-            throw e;  // rethrow the exception to maintain original behavior
         }
+        System.out.println("Threshold check completed for all users.");
     }
 
-    // Check if the price condition has been reached
-    public boolean isThresholdReached(Notification notification, Double currentPrice) {
-        String type = notification.getNotificationType();
-        double notificationValue = notification.getNotificationValue();
-        boolean thresholdReached = false;
+    private boolean checkThreshold(String type, double currentPrice, double thresholdPrice) {
+        System.out.println("Checking threshold. Type: " + type + ", Current Price: " + currentPrice + ", Threshold Price: " + thresholdPrice);
 
-        switch (type.toLowerCase()) {
-            case "price fall to":
-                thresholdReached = currentPrice <= notificationValue;
-                System.out.println("Price fall to check: currentPrice=" + currentPrice + " <= notificationValue=" + notificationValue + " : " + thresholdReached);
-                break;
+        switch (type) {
             case "price rise to":
-                thresholdReached = currentPrice >= notificationValue;
-                System.out.println("Price rise to check: currentPrice=" + currentPrice + " >= notificationValue=" + notificationValue + " : " + thresholdReached);
-                break;
+                boolean priceRise = currentPrice >= thresholdPrice;
+                System.out.println("Price rise check: " + priceRise);
+                return priceRise;
+            case "price fall to":
+                boolean priceFall = currentPrice <= thresholdPrice;
+                System.out.println("Price fall check: " + priceFall);
+                return priceFall;
             default:
-                System.out.println("Unknown notification type: " + type);
-                break;
+                System.out.println("Unknown threshold type: " + type);
+                return false;
         }
-        return thresholdReached;
     }
 
-    // Notify the user by sending the notification
-    private void notifyUser(Notification notification) {
-        NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setUserId(notification.getUserId());
-        notificationDto.setRemarks("Price " + notification.getNotificationType() + " " +
-                notification.getNotificationValue() + " for token " + notification.getToken());
+    private void notifyUser(String userId, String token, String type, double thresholdPrice, double currentPrice, String remarks) {
+        System.out.println("Preparing notification for userId: " + userId + ", Token: " + token);
 
-        System.out.println("Sending notification to user: " + notificationDto.getUserId());
-        // Send the notification using the NotificationService
+        NotificationDto notificationDto = new NotificationDto();
+        notificationDto.setUserId(userId);
+        notificationDto.setToken(token);
+        notificationDto.setNotificationType(type);
+        notificationDto.setNotificationValue(thresholdPrice);
+        notificationDto.setCurrentPrice(currentPrice); // Set current price
+        notificationDto.setRemarks(remarks);
+
+        System.out.println("Sending notification to userId: " + userId + " for token: " + token + ", type: " + type + ", threshold: " + thresholdPrice + ", current price: " + currentPrice);
         notificationService.sendNotification(notificationDto);
-        System.out.println("Notification sent to user: " + notificationDto.getUserId());
+        System.out.println("Notification sent to userId: " + userId);
     }
 }

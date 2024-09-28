@@ -6,6 +6,7 @@ public class NotificationDto {
     private String notificationType;
     private Double notificationValue;
     private String remarks;
+    private Double currentPrice;
 
     // Getters and Setters
     public String getUserId() {
@@ -46,5 +47,13 @@ public class NotificationDto {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public Double getCurrentPrice() {
+        return currentPrice;
+    }
+
+    public void setCurrentPrice(Double currentPrice) {
+        this.currentPrice = currentPrice;
     }
 }
