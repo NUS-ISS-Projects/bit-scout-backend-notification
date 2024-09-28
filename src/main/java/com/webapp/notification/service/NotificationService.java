@@ -21,6 +21,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.CollectionReference;
@@ -127,15 +128,36 @@ public class NotificationService {
         return mapToDto(savedNotification);
     }
 
-    public void deleteNotification(String userId, Long notificationId) throws InterruptedException, ExecutionException {
-        System.out.println("Deleting notification with ID: " + notificationId + " for userId: " + userId);
-        // Delete the notification from Firestore
+    public void deleteNotification(String userId, String coinName)
+            throws InterruptedException, ExecutionException {
+        System.out.println("Deleting notification for token: " + coinName + " for userId: " + userId);
+
+        // Reference to the notifications collection
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         DocumentReference document = notifications.document(userId);
-        document.delete().get();
 
-        notificationRepository.deleteById(notificationId);
-        System.out.println("Notification deleted successfully.");
+        // Retrieve the document from Firestore
+        ApiFuture<DocumentSnapshot> future = document.get();
+        DocumentSnapshot documentSnapshot = future.get();
+
+        // Check if the document exists
+        if (documentSnapshot.exists()) {
+            Map<String, Object> notificationData = documentSnapshot.getData();
+
+            // Check if the token exists in the document
+            if (notificationData.containsKey(coinName)) {
+                // Remove the token entry from the notification data
+                notificationData.remove(coinName);
+                // Save the updated document back to Firestore
+                WriteResult result = document.set(notificationData).get();
+                System.out.println(
+                        "Deleted notification for token: " + coinName + ", update time: " + result.getUpdateTime());
+            } else {
+                System.out.println("No notification found for token: " + coinName);
+            }
+        } else {
+            System.out.println("Document does not exist for userId: " + userId);
+        }
     }
 
     public List<NotificationDto> getNotificationsByUserId(String userId)
@@ -195,9 +217,9 @@ public class NotificationService {
     public void sendNotification(NotificationDto notificationDto) {
         System.out.println("Sending notification to user " + notificationDto.getUserId());
         System.out.println("Notification details: Token=" + notificationDto.getToken() +
-                           ", Type=" + notificationDto.getNotificationType() +
-                           ", Value=" + notificationDto.getNotificationValue() +
-                           ", Remarks=" + notificationDto.getRemarks());
+                ", Type=" + notificationDto.getNotificationType() +
+                ", Value=" + notificationDto.getNotificationValue() +
+                ", Remarks=" + notificationDto.getRemarks());
 
         // Send WebSocket Notification
         sendWebSocketNotification(notificationDto);
@@ -207,6 +229,7 @@ public class NotificationService {
     private void sendWebSocketNotification(NotificationDto notificationDto) {
         String destination = "/topic/notifications/" + notificationDto.getUserId();
         messagingTemplate.convertAndSend(destination, notificationDto);
-        System.out.println("WebSocket Notification sent to user " + notificationDto.getUserId() + " at destination " + destination);
+        System.out.println("WebSocket Notification sent to user " + notificationDto.getUserId() + " at destination "
+                + destination);
     }
 }

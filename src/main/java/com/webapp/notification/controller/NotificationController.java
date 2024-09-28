@@ -55,16 +55,22 @@ public class NotificationController {
     // }
 
     // 3.5 Delete Notification
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteNotification(@RequestHeader("Authorization") String token,
-            @PathVariable Long id)
+    @DeleteMapping("/delete/{coinName}")
+    public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token,
+            @PathVariable String coinName)
             throws InterruptedException, ExecutionException {
         String userId = userService.validateTokenAndGetUserId(token);
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        notificationService.deleteNotification(userId, id);
-        return ResponseEntity.noContent().build();
+        try {
+            // Call your deletion logic here, passing userId and coinName
+            notificationService.deleteNotification(userId, coinName);
+            return ResponseEntity.ok("Notification deleted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to delete notification: " + e.getMessage());
+        }
     }
 
     // Get all notifications for user
