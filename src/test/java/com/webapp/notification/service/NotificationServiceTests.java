@@ -137,16 +137,14 @@ class NotificationServiceTests {
     }
 
     // @Test
-    // void getNotificationsByUserIdTest() throws InterruptedException,
-    // ExecutionException {
-    // // Call the method to test
-    // List<NotificationDto> notifications =
-    // notificationService.getNotificationsByUserId("1L");
+    // void getNotificationsByUserIdTest() throws InterruptedException, ExecutionException {
+    //     // Call the method to test
+    //     List<NotificationDto> notifications = notificationService.getNotificationsByUserId("1L");
 
-    // // Assertions
-    // assertNotNull(notifications);
-    // assertEquals(0, notifications.size()); // Based on the mocked empty result
-    // verify(collectionReference, times(1)).get();
+    //     // Assertions
+    //     assertNotNull(notifications);
+    //     assertEquals(0, notifications.size());  // Based on the mocked empty result
+    //     verify(collectionReference, times(1)).get();
     // }
 
     @Test
