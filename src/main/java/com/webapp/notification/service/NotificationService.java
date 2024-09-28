@@ -1,12 +1,16 @@
 package com.webapp.notification.service;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.entity.Notification;
 import com.webapp.notification.repository.NotificationRepository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -33,43 +37,76 @@ public class NotificationService {
 
     private static final String COLLECTION_NAME = "notifications";
 
-    public NotificationDto createNotification(NotificationDto notificationDto)
+    public NotificationDto createOrUpdateNotification(NotificationDto notificationDto)
             throws InterruptedException, ExecutionException {
 
-        // Save notification to Firestore
         String userId = notificationDto.getUserId();
+        String token = notificationDto.getToken();
+
+        // Firestore reference
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         DocumentReference document = notifications.document(userId);
-        WriteResult result = document.set(notificationDto).get();
 
-        Notification notification = new Notification();
-        notification.setUserId(notificationDto.getUserId());
-        notification.setToken(notificationDto.getToken());
-        notification.setNotificationType(notificationDto.getNotificationType());
-        notification.setNotificationValue(notificationDto.getNotificationValue());
-        notification.setRemarks(notificationDto.getRemarks());
+        // Retrieve the document from Firestore
+        ApiFuture<DocumentSnapshot> future = document.get();
+        DocumentSnapshot documentSnapshot = future.get();
 
+        Map<String, Object> notificationData;
+        if (documentSnapshot.exists()) {
+            // Document exists, update or add the coin information
+            notificationData = documentSnapshot.getData();
+
+            // Check if token already exists and update its values
+            if (notificationData.containsKey(token)) {
+                Map<String, Object> tokenData = (Map<String, Object>) notificationData.get(token);
+                tokenData.put("notificationType", notificationDto.getNotificationType());
+                tokenData.put("notificationValue", notificationDto.getNotificationValue());
+                tokenData.put("remarks", notificationDto.getRemarks());
+            } else {
+                // Add new token data
+                Map<String, Object> tokenData = new HashMap<>();
+                tokenData.put("notificationType", notificationDto.getNotificationType());
+                tokenData.put("notificationValue", notificationDto.getNotificationValue());
+                tokenData.put("remarks", notificationDto.getRemarks());
+                notificationData.put(token, tokenData);
+            }
+        } else {
+            // Document does not exist, create new document with the notification data
+            notificationData = new HashMap<>();
+            Map<String, Object> tokenData = new HashMap<>();
+            tokenData.put("notificationType", notificationDto.getNotificationType());
+            tokenData.put("notificationValue", notificationDto.getNotificationValue());
+            tokenData.put("remarks", notificationDto.getRemarks());
+            notificationData.put(token, tokenData);
+            notificationData.put("userId", userId);
+        }
+
+        // Save the updated or new document to Firestore
+        WriteResult result = document.set(notificationData).get();
+
+        // Update or create notification in the repository
+        List<Notification> existingNotifications = notificationRepository.findByUserId(userId);
+        Notification notification;
+        if (!existingNotifications.isEmpty()) {
+            // Update the first existing notification
+            notification = existingNotifications.get(0);
+            notification.setNotificationType(notificationDto.getNotificationType());
+            notification.setNotificationValue(notificationDto.getNotificationValue());
+            notification.setRemarks(notificationDto.getRemarks());
+            notification.setToken(notificationDto.getToken());
+        } else {
+            // Create new notification object
+            notification = new Notification();
+            notification.setUserId(userId);
+            notification.setToken(token);
+            notification.setNotificationType(notificationDto.getNotificationType());
+            notification.setNotificationValue(notificationDto.getNotificationValue());
+            notification.setRemarks(notificationDto.getRemarks());
+        }
+
+        // Save the notification to the repository
         Notification savedNotification = notificationRepository.save(notification);
         return mapToDto(savedNotification);
-    }
-
-    public NotificationDto updateNotification(String userId, Long notificationId, NotificationDto notificationDto)
-            throws InterruptedException, ExecutionException {
-
-        // Update the notification in Firestore
-        CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        DocumentReference document = notifications.document(userId);
-        WriteResult result = document.set(notificationDto).get();
-
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
-
-        notification.setNotificationType(notificationDto.getNotificationType());
-        notification.setNotificationValue(notificationDto.getNotificationValue());
-        notification.setRemarks(notificationDto.getRemarks());
-
-        Notification updatedNotification = notificationRepository.save(notification);
-        return mapToDto(updatedNotification);
     }
 
     public void deleteNotification(String userId, Long notificationId) throws InterruptedException, ExecutionException {
@@ -81,7 +118,8 @@ public class NotificationService {
         notificationRepository.deleteById(notificationId);
     }
 
-    public List<NotificationDto> getNotificationsByUserId(String userId) throws InterruptedException, ExecutionException {
+    public List<NotificationDto> getNotificationsByUserId(String userId)
+            throws InterruptedException, ExecutionException {
 
         CollectionReference notifications = firestore.collection(COLLECTION_NAME);
         return notifications.get().get().getDocuments().stream()
