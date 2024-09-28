@@ -1,7 +1,7 @@
 package com.webapp.notification.controller;
 
 import com.webapp.notification.dto.NotificationDto;
-import com.webapp.notification.entity.Notification;
+
 import com.webapp.notification.service.NotificationService;
 import com.webapp.notification.service.UserService;
 

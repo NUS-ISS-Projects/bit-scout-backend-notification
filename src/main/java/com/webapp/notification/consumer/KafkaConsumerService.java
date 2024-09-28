@@ -50,8 +50,7 @@ public class KafkaConsumerService {
                 // Process the price update
                 thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
             } else {
-                // System.out.println("Price change for " + priceUpdateDto.getToken() + " is
-                // insignificant, skipping.");
+                System.out.println("Price change for " + priceUpdateDto.getToken() + " is insignificant, skipping.");
             }
         } catch (Exception e) {
             logger.error("Failed to deserialize message: " + message, e);
