@@ -67,6 +67,10 @@ public class NotificationController {
             // Call your deletion logic here, passing userId and coinName
             notificationService.deleteNotification(userId, coinName);
             return ResponseEntity.ok("Notification deleted successfully.");
+        } catch (InterruptedException e) {
+            // Rethrow the InterruptedException to be handled by the caller
+            Thread.currentThread().interrupt(); // Restore the interrupted status
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to delete notification: " + e.getMessage());
