@@ -60,6 +60,9 @@ public class NotificationService {
         DocumentSnapshot documentSnapshot = future.get();
         System.out.println("Document found: " + documentSnapshot.exists());
 
+        String notificationType = "notificationType";
+        String notificationValue = "notificationValue";
+        String remarks = "remarks";
         Map<String, Object> notificationData;
         if (documentSnapshot.exists()) {
             // Document exists, update or add the coin information
@@ -70,16 +73,16 @@ public class NotificationService {
             if (notificationData.containsKey(token)) {
                 Map<String, Object> tokenData = (Map<String, Object>) notificationData.get(token);
                 System.out.println("Token data exists, updating values for token: " + token);
-                tokenData.put("notificationType", notificationDto.getNotificationType());
-                tokenData.put("notificationValue", notificationDto.getNotificationValue());
-                tokenData.put("remarks", notificationDto.getRemarks());
+                tokenData.put(notificationType, notificationDto.getNotificationType());
+                tokenData.put(notificationValue, notificationDto.getNotificationValue());
+                tokenData.put(remarks, notificationDto.getRemarks());
             } else {
                 System.out.println("Adding new token data for token: " + token);
                 // Add new token data
                 Map<String, Object> tokenData = new HashMap<>();
-                tokenData.put("notificationType", notificationDto.getNotificationType());
-                tokenData.put("notificationValue", notificationDto.getNotificationValue());
-                tokenData.put("remarks", notificationDto.getRemarks());
+                tokenData.put(notificationType, notificationDto.getNotificationType());
+                tokenData.put(notificationValue, notificationDto.getNotificationValue());
+                tokenData.put(remarks, notificationDto.getRemarks());
                 notificationData.put(token, tokenData);
             }
         } else {
@@ -87,9 +90,9 @@ public class NotificationService {
             // Document does not exist, create new document with the notification data
             notificationData = new HashMap<>();
             Map<String, Object> tokenData = new HashMap<>();
-            tokenData.put("notificationType", notificationDto.getNotificationType());
-            tokenData.put("notificationValue", notificationDto.getNotificationValue());
-            tokenData.put("remarks", notificationDto.getRemarks());
+            tokenData.put(notificationType, notificationDto.getNotificationType());
+            tokenData.put(notificationValue, notificationDto.getNotificationValue());
+            tokenData.put(remarks, notificationDto.getRemarks());
             notificationData.put(token, tokenData);
             notificationData.put("userId", userId);
         }
