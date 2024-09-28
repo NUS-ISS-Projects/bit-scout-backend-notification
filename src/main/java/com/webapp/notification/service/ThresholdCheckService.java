@@ -36,7 +36,7 @@ public class ThresholdCheckService {
             System.out.println("Processing userId: " + document.getId());
 
             // Looking for the token within user's notifications
-            String tokenKey = priceUpdate.getToken().toLowerCase() + "usdt";
+            String tokenKey = priceUpdate.getToken().toLowerCase();
             System.out.println("Looking for token: " + tokenKey + " in user's notifications.");
 
             if (data.containsKey(tokenKey)) {
