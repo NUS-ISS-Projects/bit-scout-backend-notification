@@ -24,7 +24,7 @@ public class KafkaConsumerService {
     private final Map<String, Double> lastPriceMap = new ConcurrentHashMap<>();
 
     // Define a price change threshold (in percentage)
-    private final double priceChangeThreshold = 0.1; // For example, 0.1%
+    private final double priceChangeThreshold = 0.01; // TODO: 0.01%
 
     @Autowired
     private ThresholdCheckService thresholdCheckService;
