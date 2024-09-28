@@ -38,22 +38,6 @@ public class NotificationController {
         return ResponseEntity.ok(createdNotification);
     }
 
-    // 3.4 Edit Notification
-    // @PutMapping("/edit/{id}")
-    // public ResponseEntity<NotificationDto>
-    // editNotification(@RequestHeader("Authorization") String token,
-    // @PathVariable Long id,
-    // @RequestBody NotificationDto notificationDto)
-    // throws InterruptedException, ExecutionException {
-    // String userId = userService.validateTokenAndGetUserId(token);
-    // if (userId == null) {
-    // return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    // }
-    // NotificationDto updatedNotification =
-    // notificationService.createOrUpdateNotification(userId, id, notificationDto);
-    // return ResponseEntity.ok(updatedNotification);
-    // }
-
     // 3.5 Delete Notification
     @DeleteMapping("/delete/{coinName}")
     public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token,
