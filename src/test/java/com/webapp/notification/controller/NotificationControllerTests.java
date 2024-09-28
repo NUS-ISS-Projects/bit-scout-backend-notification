@@ -110,7 +110,6 @@ class NotificationControllerTests {
 
         NotificationDto notificationDto1 = new NotificationDto();
         notificationDto1.setUserId(userId);
-
         NotificationDto notificationDto2 = new NotificationDto();
         notificationDto2.setUserId(userId);
 
