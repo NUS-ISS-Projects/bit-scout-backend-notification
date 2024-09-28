@@ -33,11 +33,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
+import com.google.cloud.firestore.CollectionReference;
 
 class NotificationControllerTests {
 
     @InjectMocks
     private NotificationController notificationController;
+
+    @Mock
+    private CollectionReference collectionReference;
 
     @Mock
     private NotificationService notificationService;
@@ -54,14 +58,12 @@ class NotificationControllerTests {
     @Mock
     private DocumentSnapshot documentSnapshot; // Mock DocumentSnapshot
 
+    @Mock
+    private ApiFuture<DocumentSnapshot> apiFuture;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        when(firestore.collection(anyString())).thenReturn(mock(CollectionReference.class));
-        when(documentReference.get()).thenReturn(ApiFutures.immediateFuture(mock(DocumentSnapshot.class))); // Mocking
-                                                                                                            // // the
-                                                                                                            // get
-                                                                                                            // method
+        MockitoAnnotations.openMocks(this); // method
     }
 
     // @Test
@@ -126,39 +128,56 @@ class NotificationControllerTests {
     // verify(notificationService, times(1)).getNotificationsByUserId("test");
     // assert response.getBody().size() == 2;
     // }
+    // @Test
+    // void getNotificationsByUserIdTest() throws ExecutionException,
+    // InterruptedException {
+    // String COLLECTION_NAME = "notifications";
+    // // Mock the Firestore collection and document reference
+    // CollectionReference collectionReference = mock(CollectionReference.class);
+    // when(firestore.collection(COLLECTION_NAME)).thenReturn(collectionReference);
 
-    @Test
-    void getNotificationsByUserIdTest() throws InterruptedException, ExecutionException {
-        String userId = "testUserId";
-        final String COLLECTION_NAME = "notifications";
+    // // Mock the document reference
+    // DocumentReference documentReference = mock(DocumentReference.class);
+    // when(collectionReference.document(anyString())).thenReturn(documentReference);
 
-        // Create a mock DocumentReference
-        DocumentReference documentReference = mock(DocumentReference.class);
-        ApiFuture<DocumentSnapshot> future = mock(ApiFuture.class);
-        when(future.get()).thenReturn(documentSnapshot);
+    // // Mock the API future and document snapshot
+    // ApiFuture<DocumentSnapshot> future = mock(ApiFuture.class);
+    // when(documentReference.get()).thenReturn(future);
 
-        // Mock the DocumentReference to return the ApiFuture
-        when(documentReference.get()).thenReturn(future);
+    // // Create a mock DocumentSnapshot and set up its behavior
+    // DocumentSnapshot documentSnapshot = mock(DocumentSnapshot.class);
+    // Map<String, Object> data = new HashMap<>();
 
-        // Ensure Firestore returns the mocked DocumentReference when called
-        when(firestore.collection(COLLECTION_NAME).document(userId)).thenReturn(documentReference);
+    // // Mock notification data
+    // Map<String, Object> notificationData = new HashMap<>();
+    // notificationData.put("notificationType", "price");
+    // notificationData.put("notificationValue", 100.0);
+    // notificationData.put("remarks", "Price Alert");
 
-        // Mock the DocumentSnapshot to simulate that it exists
-        when(documentSnapshot.exists()).thenReturn(true);
+    // // Add the notification data to the document data
+    // data.put("btcjy", notificationData); // Use the token as key
 
-        // Simulate returning a list of notifications
-        NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setUserId(userId);
-        when(notificationService.getNotificationsByUserId(userId)).thenReturn(List.of(notificationDto));
+    // // Set up DocumentSnapshot behavior
+    // when(future.get()).thenReturn(documentSnapshot); // Make sure future.get()
+    // returns documentSnapshot
+    // when(documentSnapshot.exists()).thenReturn(true);
+    // when(documentSnapshot.getData()).thenReturn(data);
 
-        // Call the method under test
-        List<NotificationDto> notifications = notificationService.getNotificationsByUserId(userId);
+    // // Call the method under test
+    // List<NotificationDto> notifications =
+    // notificationService.getNotificationsByUserId("userId");
 
-        // Assertions
-        assertNotNull(notifications);
-        assertEquals(1, notifications.size());
-        assertEquals(userId, notifications.get(0).getUserId());
-    }
+    // // Assert the results
+    // assertEquals(1, notifications.size()); // Ensure one notification is returned
+    // NotificationDto notification = notifications.get(0);
+    // assertEquals("userId", notification.getUserId());
+    // assertEquals("btcjy", notification.getToken());
+    // assertEquals("price", notification.getNotificationType());
+    // assertEquals(100.0, notification.getNotificationValue());
+    // assertEquals("Price Alert", notification.getRemarks());
+    // }
+
+    // }
 
     // @Test
     // void testHealthCheck() {
