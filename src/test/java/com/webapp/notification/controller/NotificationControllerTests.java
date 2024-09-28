@@ -2,16 +2,23 @@ package com.webapp.notification.controller;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.google.api.core.ApiFutures;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
 import com.webapp.notification.controller.NotificationController;
 import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.service.NotificationService;
@@ -35,9 +42,20 @@ class NotificationControllerTests {
     @Mock
     private UserService userService;
 
+    @Mock
+    private Firestore firestore; // Add this to mock Firestore
+
+    @Mock
+    private DocumentReference documentReference;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(firestore.collection(anyString())).thenReturn(mock(CollectionReference.class));
+        when(documentReference.get()).thenReturn(ApiFutures.immediateFuture(mock(DocumentSnapshot.class))); // Mocking
+                                                                                                            // // the
+                                                                                                            // get
+                                                                                                            // method
     }
 
     // @Test
