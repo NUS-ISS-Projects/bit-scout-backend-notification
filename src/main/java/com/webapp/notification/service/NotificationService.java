@@ -8,6 +8,8 @@ import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.entity.Notification;
 import com.webapp.notification.repository.NotificationRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.WriteResult;
@@ -120,15 +124,44 @@ public class NotificationService {
 
     public List<NotificationDto> getNotificationsByUserId(String userId)
             throws InterruptedException, ExecutionException {
+        DocumentReference document = firestore.collection(COLLECTION_NAME).document(userId);
 
-        CollectionReference notifications = firestore.collection(COLLECTION_NAME);
-        return notifications.get().get().getDocuments().stream()
-                .map(doc -> doc.toObject(NotificationDto.class))
-                .collect(Collectors.toList());
-        // List<Notification> notifications =
-        // notificationRepository.findByUserId(userId);
-        // return
-        // notifications.stream().map(this::mapToDto).collect(Collectors.toList());
+        // Fetch the user document
+        DocumentSnapshot documentSnapshot = document.get().get();
+
+        if (documentSnapshot.exists()) {
+            Map<String, Object> data = documentSnapshot.getData();
+            List<NotificationDto> notifications = new ArrayList<>();
+
+            // Iterate through the data entries to find notifications
+            for (Map.Entry<String, Object> entry : data.entrySet()) {
+                String token = entry.getKey(); // This is the notification key (e.g., "btcjy", "ethusdt")
+
+                // Check if the entry value is a map (notification data)
+                if (entry.getValue() instanceof Map) {
+                    Map<String, Object> notificationData = (Map<String, Object>) entry.getValue();
+
+                    // Create NotificationDto and set its properties
+                    NotificationDto notificationDto = new NotificationDto();
+                    notificationDto.setUserId(userId); // Set userId from the parameter
+                    notificationDto.setToken(token); // Use the entry key as the token
+                    notificationDto.setNotificationType((String) notificationData.get("notificationType"));
+                    notificationDto
+                            .setNotificationValue(((Number) notificationData.get("notificationValue")).doubleValue()); // Convert
+                                                                                                                       // to
+                                                                                                                       // Double
+                    notificationDto.setRemarks((String) notificationData.get("remarks"));
+
+                    // Add the notification to the list
+                    notifications.add(notificationDto);
+                }
+            }
+
+            return notifications;
+        } else {
+            System.out.println("No document found for userId: " + userId);
+            return Collections.emptyList();
+        }
     }
 
     private NotificationDto mapToDto(Notification notification) {

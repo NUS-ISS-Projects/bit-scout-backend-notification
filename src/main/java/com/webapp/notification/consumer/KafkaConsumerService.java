@@ -33,14 +33,16 @@ public class KafkaConsumerService {
     public void consumePriceUpdate(String message) {
         try {
             // Deserialize the incoming message
-            PriceUpdateDto priceUpdateDto = objectMapper.readValue(message, PriceUpdateDto.class);
+            PriceUpdateDto priceUpdateDto = objectMapper.readValue(message,
+                    PriceUpdateDto.class);
             // System.out.println("Received price update: " + priceUpdateDto);
 
             // Get the last known price for the token
             Double lastPrice = lastPriceMap.get(priceUpdateDto.getToken());
 
             // Check if the price change is significant
-            if (lastPrice == null || hasSignificantChange(lastPrice, priceUpdateDto.getPrice())) {
+            if (lastPrice == null || hasSignificantChange(lastPrice,
+                    priceUpdateDto.getPrice())) {
                 System.out.println("Price change for " + priceUpdateDto.getToken() + " is significant, processing.");
                 // Update the last price in the map
                 lastPriceMap.put(priceUpdateDto.getToken(), priceUpdateDto.getPrice());
