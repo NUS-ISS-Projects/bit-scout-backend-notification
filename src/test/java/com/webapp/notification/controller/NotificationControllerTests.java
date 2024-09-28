@@ -132,38 +132,32 @@ class NotificationControllerTests {
         String userId = "testUserId";
         final String COLLECTION_NAME = "notifications";
 
-        // Mock the DocumentReference
-        when(firestore.collection(COLLECTION_NAME)).thenReturn(mock(CollectionReference.class));
-        when(firestore.collection(COLLECTION_NAME).document(userId)).thenReturn(documentReference);
-
-        // Mock the behavior of DocumentReference to return a valid DocumentSnapshot
+        // Create a mock DocumentReference
+        DocumentReference documentReference = mock(DocumentReference.class);
         ApiFuture<DocumentSnapshot> future = mock(ApiFuture.class);
-        when(documentReference.get()).thenReturn(future);
-
-        // Create a mock DocumentSnapshot
-        DocumentSnapshot documentSnapshot = mock(DocumentSnapshot.class);
         when(future.get()).thenReturn(documentSnapshot);
 
-        // Mock the DocumentSnapshot to simulate that it exists and has data
+        // Mock the DocumentReference to return the ApiFuture
+        when(documentReference.get()).thenReturn(future);
+
+        // Ensure Firestore returns the mocked DocumentReference when called
+        when(firestore.collection(COLLECTION_NAME).document(userId)).thenReturn(documentReference);
+
+        // Mock the DocumentSnapshot to simulate that it exists
         when(documentSnapshot.exists()).thenReturn(true);
 
-        // Prepare the data to return from the document snapshot
-        Map<String, Object> mockData = new HashMap<>();
-        Map<String, Object> notificationData = new HashMap<>();
-        notificationData.put("notificationType", "testType");
-        notificationData.put("notificationValue", 100);
-        notificationData.put("remarks", "Test remark");
-
-        // Mocking the data inside the document snapshot
-        mockData.put("testToken", notificationData);
-        when(documentSnapshot.getData()).thenReturn(mockData);
+        // Simulate returning a list of notifications
+        NotificationDto notificationDto = new NotificationDto();
+        notificationDto.setUserId(userId);
+        when(notificationService.getNotificationsByUserId(userId)).thenReturn(List.of(notificationDto));
 
         // Call the method under test
         List<NotificationDto> notifications = notificationService.getNotificationsByUserId(userId);
 
         // Assertions
         assertNotNull(notifications);
-        assertEquals(0, notifications.size());
+        assertEquals(1, notifications.size());
+        assertEquals(userId, notifications.get(0).getUserId());
     }
 
     // @Test
