@@ -132,6 +132,11 @@ public class ThresholdCheckService {
         notificationDto.setCurrentPrice(currentPrice); // Set current price
         notificationDto.setRemarks(remarks);
 
+        // Get pod hostname, to identify the pod that sent the notification
+        // This is needed for the WebSocket broadcast so that the pod that sent the notification can be skipped
+        String podId = System.getenv("HOSTNAME");  // Get pod hostname
+        notificationDto.setPodId(podId);
+
         System.out.println("Sending notification to userId: " + userId + " for token: " + token + ", type: " + type + ", threshold: " + thresholdPrice + ", current price: " + currentPrice);
         notificationService.sendNotification(notificationDto);
         System.out.println("Notification sent to userId: " + userId);

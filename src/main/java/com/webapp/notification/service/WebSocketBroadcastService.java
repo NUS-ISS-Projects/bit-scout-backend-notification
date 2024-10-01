@@ -23,6 +23,16 @@ public class WebSocketBroadcastService {
     public void consumeWebSocketBroadcast(NotificationDto notificationDto) {
         try {
             System.out.println("Received WebSocket broadcast: " + notificationDto);
+            // Get the current pod's ID (hostname)
+            String currentPodId = System.getenv("HOSTNAME");
+
+            // If the message was sent by this pod, ignore it
+            if (notificationDto.getPodId().equals(currentPodId)) {
+                System.out.println("Ignoring message sent by this pod: " + currentPodId);
+                System.out.println("Message: " + notificationDto);
+                return;  // Skip processing
+            }
+
             broadcastToWebSocketClients(notificationDto);
         } catch (Exception e) {
             e.printStackTrace();
