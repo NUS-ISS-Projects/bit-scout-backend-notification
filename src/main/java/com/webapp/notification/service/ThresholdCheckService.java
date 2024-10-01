@@ -1,5 +1,6 @@
 package com.webapp.notification.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
@@ -18,8 +19,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Service
 public class ThresholdCheckService {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private Firestore firestore;
@@ -132,7 +137,16 @@ public class ThresholdCheckService {
         System.out.println("Notification sent to userId: " + userId);
 
         // Also send notification via Kafka to WebSocket broadcasting topic
-        kafkaTemplate.send("websocket-broadcasts", notificationDto.toString());
+        try {
+            // Convert the notification DTO to a JSON string
+            String message = objectMapper.writeValueAsString(notificationDto);
+
+            // Send JSON message to Kafka topic
+            kafkaTemplate.send("websocket-broadcasts", message);
+        } catch (JsonProcessingException e) {
+            // Handle JSON serialization error
+            System.out.println("Error serializing notificationDto to JSON: " + e.getMessage());
+        }
         System.out.println("Kafka WebSocket broadcast sent for userId: " + userId);
     }
 }
