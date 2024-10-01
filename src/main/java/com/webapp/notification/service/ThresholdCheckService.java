@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class ThresholdCheckService {
@@ -23,7 +24,7 @@ public class ThresholdCheckService {
     private NotificationService notificationService;
 
     @Autowired
-    private RedisTemplate<String, List<QueryDocumentSnapshot>> redisTemplate; // Redis integration for caching
+    private RedisTemplate<String, List<Map<String, Object>>> redisTemplate; // Use Map instead of QueryDocumentSnapshot
 
     private static final String COLLECTION_NAME = "notifications";
     private static final String CACHE_KEY = "notificationDocuments";
@@ -33,54 +34,58 @@ public class ThresholdCheckService {
         System.out.println("Starting threshold check for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
 
         // Check if notification documents are cached in Redis
-        List<QueryDocumentSnapshot> documents = redisTemplate.opsForValue().get(CACHE_KEY);
+        List<Map<String, Object>> cachedDocuments = redisTemplate.opsForValue().get(CACHE_KEY);
 
-        if (documents == null || documents.isEmpty()) {
+        if (cachedDocuments == null || cachedDocuments.isEmpty()) {
             // Cache is empty or expired, fetch from Firestore
             System.out.println("Cache expired or empty. Fetching from Firestore...");
             CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
             ApiFuture<QuerySnapshot> future = notificationsCollection.get();
-            documents = future.get().getDocuments();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            // Transform QueryDocumentSnapshot to a serializable format
+            cachedDocuments = documents.stream()
+                .map(QueryDocumentSnapshot::getData) // Extract data as Map<String, Object>
+                .collect(Collectors.toList());
 
             // Cache the fetched documents in Redis with expiration
-            redisTemplate.opsForValue().set(CACHE_KEY, documents, CACHE_EXPIRATION, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(CACHE_KEY, cachedDocuments, CACHE_EXPIRATION, TimeUnit.SECONDS);
             System.out.println("Fetched " + documents.size() + " documents from Firestore and cached them in Redis.");
         } else {
             System.out.println("Using cached data from Redis.");
-            System.out.println("Cached documents count: " + documents.size());
+            System.out.println("Cached documents count: " + cachedDocuments.size());
         }
 
         // Proceed with the threshold check using the cached or freshly fetched documents
-        processDocuments(documents, priceUpdate);
+        processDocuments(cachedDocuments, priceUpdate);
     }
 
-    private void processDocuments(List<QueryDocumentSnapshot> documents, PriceUpdateDto priceUpdate) {
-        for (QueryDocumentSnapshot document : documents) {
-            Map<String, Object> data = document.getData();
-            System.out.println("Processing userId: " + document.getId());
+    private void processDocuments(List<Map<String, Object>> cachedDocuments, PriceUpdateDto priceUpdate) {
+        for (Map<String, Object> document : cachedDocuments) {
+            System.out.println("Processing userId: " + document.get("userId"));
 
             // Looking for the token within user's notifications
             String tokenKey = priceUpdate.getToken().toLowerCase();
             System.out.println("Looking for token: " + tokenKey + " in user's notifications.");
 
-            if (data.containsKey(tokenKey)) {
-                Map<String, Object> tokenData = (Map<String, Object>) data.get(tokenKey);
+            if (document.containsKey(tokenKey)) {
+                Map<String, Object> tokenData = (Map<String, Object>) document.get(tokenKey);
                 double thresholdPrice = ((Number) tokenData.get("notificationValue")).doubleValue();
                 String type = (String) tokenData.get("notificationType");
 
                 System.out.println("Token found. Type: " + type + ", Threshold Price: " + thresholdPrice);
 
                 boolean thresholdReached = checkThreshold(type, priceUpdate.getPrice(), thresholdPrice);
-                System.out.println("Threshold reached for userId: " + document.getId() + " -> " + thresholdReached);
+                System.out.println("Threshold reached for userId: " + document.get("userId") + " -> " + thresholdReached);
 
                 if (thresholdReached) {
-                    System.out.println("Notifying userId: " + document.getId() + " as threshold is met.");
-                    notifyUser(document.getId(), priceUpdate.getToken(), type, thresholdPrice, priceUpdate.getPrice(), (String) tokenData.get("remarks"));
+                    System.out.println("Notifying userId: " + document.get("userId") + " as threshold is met.");
+                    notifyUser((String) document.get("userId"), priceUpdate.getToken(), type, thresholdPrice, priceUpdate.getPrice(), (String) tokenData.get("remarks"));
                 } else {
-                    System.out.println("No notification for userId: " + document.getId() + " as threshold is not met.");
+                    System.out.println("No notification for userId: " + document.get("userId") + " as threshold is not met.");
                 }
             } else {
-                System.out.println("Token: " + tokenKey + " not found for userId: " + document.getId());
+                System.out.println("Token: " + tokenKey + " not found for userId: " + document.get("userId"));
             }
         }
         System.out.println("Threshold check completed for all users.");

@@ -1,11 +1,13 @@
 package com.webapp.notification.config;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
@@ -35,9 +37,9 @@ public class AppConfig {
     }
 
     @Bean
-    public RedisTemplate<String, List<QueryDocumentSnapshot>> redisTemplate() {
-        RedisTemplate<String, List<QueryDocumentSnapshot>> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory());
+    public RedisTemplate<String, List<Map<String, Object>>> redisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, List<Map<String, Object>>> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(connectionFactory);
         return redisTemplate;
     }
 }

@@ -18,10 +18,10 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -44,10 +44,10 @@ class ThresholdCheckServiceTests {
     private NotificationService notificationService;
 
     @Mock
-    private RedisTemplate<String, List<QueryDocumentSnapshot>> redisTemplate;
+    private RedisTemplate<String, List<Map<String, Object>>> redisTemplate;
 
     @Mock
-    private ValueOperations<String, List<QueryDocumentSnapshot>> valueOperations;
+    private ValueOperations<String, List<Map<String, Object>>> valueOperations;
 
     @InjectMocks
     private ThresholdCheckService thresholdCheckService;
@@ -78,26 +78,8 @@ class ThresholdCheckServiceTests {
         // Mock Redis behavior
         when(redisTemplate.opsForValue()).thenReturn(valueOperations); // Mock ValueOperations
         when(valueOperations.get(anyString())).thenReturn(null); // Simulate cache miss
-        doNothing().when(valueOperations).set(anyString(), anyList(), anyLong(), any());
+        doNothing().when(valueOperations).set(anyString(), any(), anyLong(), any());
     }
-
-
-    // @Test
-    // void checkThresholdsForAllUsers_PriceFallReached_ShouldNotifyUser() throws InterruptedException, ExecutionException {
-    //     // Set price below the notification threshold
-    //     priceUpdateDto.setPrice(60000.0);  // Current price is below the threshold of 62000.0
-
-    //     // Mock the Firestore response to return a valid notification
-    //     QueryDocumentSnapshot documentSnapshot = mock(QueryDocumentSnapshot.class);
-    //     when(documentSnapshot.toObject(Notification.class)).thenReturn(notification);
-    //     when(querySnapshot.getDocuments()).thenReturn(Arrays.asList(documentSnapshot));
-
-    //     // Perform the check
-    //     thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
-
-    //     // Verify that sendNotification() was called
-    //     verify(notificationService, times(1)).sendNotification(any(NotificationDto.class));
-    // }
 
     @Test
     void checkThresholdsForAllUsers_PriceRiseReached_ShouldNotNotifyUser() throws InterruptedException, ExecutionException {
@@ -142,8 +124,8 @@ class ThresholdCheckServiceTests {
     @Test
     void checkThresholdsForAllUsers_CacheHit_ShouldNotFetchFromFirestore() throws InterruptedException, ExecutionException {
         // Simulate cache hit by returning some cached data from Redis
-        QueryDocumentSnapshot documentSnapshot = mock(QueryDocumentSnapshot.class);
-        when(redisTemplate.opsForValue().get(anyString())).thenReturn(Arrays.asList(documentSnapshot));
+        Map<String, Object> cachedData = mock(Map.class);
+        when(redisTemplate.opsForValue().get(anyString())).thenReturn(Arrays.asList(cachedData));
 
         // Perform the check
         thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
