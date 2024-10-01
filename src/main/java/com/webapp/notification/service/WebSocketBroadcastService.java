@@ -13,23 +13,16 @@ import org.springframework.stereotype.Service;
 public class WebSocketBroadcastService {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper(); // To deserialize Kafka message
-
+    
     public WebSocketBroadcastService(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @KafkaListener(
-        topics = "websocket-broadcasts",
-        containerFactory = "websocketKafkaListenerContainerFactory"
-    )
-    public void consumeWebSocketBroadcast(String message) {
+    // Notice the container factory in the listener to ensure the right configuration is used
+    @KafkaListener(topics = "websocket-broadcasts", containerFactory = "kafkaListenerContainerFactory")
+    public void consumeWebSocketBroadcast(NotificationDto notificationDto) {
         try {
-            System.out.println("Received WebSocket broadcast message: " + message);
-            // Deserialize the message into NotificationDto
-            NotificationDto notificationDto = objectMapper.readValue(message, NotificationDto.class);
-            
-            // Send the message to the specific user
+            System.out.println("Received WebSocket broadcast: " + notificationDto);
             broadcastToWebSocketClients(notificationDto);
         } catch (Exception e) {
             e.printStackTrace();
@@ -38,10 +31,8 @@ public class WebSocketBroadcastService {
 
     private void broadcastToWebSocketClients(NotificationDto notificationDto) {
         String destination = "/topic/notifications/" + notificationDto.getUserId();
-        System.out.println("Broadcasting WebSocket Notification to user " + notificationDto.getUserId() + " at destination "
-                + destination);
         messagingTemplate.convertAndSend(destination, notificationDto);
-        System.out.println("WebSocket Notification sent to user " + notificationDto.getUserId() + " at destination "
-                + destination);
+        System.out.println("WebSocket Notification sent to user " + notificationDto.getUserId());
     }
 }
+

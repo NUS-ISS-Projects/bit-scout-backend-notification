@@ -19,31 +19,30 @@ import java.util.Map;
 import java.util.UUID;
 
 @Configuration
+@EnableKafka
 public class WebSocketKafkaConfig {
 
-
-    // Create UUID-based group ID for WebSocket consumers, so that each consumer has a unique group ID, and each consumer receives all messages.
-    // This is necessary because we want to broadcast messages to all WebSocket clients, not just the first pod that consumes the message (price-updates topic).
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, NotificationDto> websocketKafkaListenerContainerFactory(
-        ConsumerFactory<String, NotificationDto> consumerFactory) {
+    public ConcurrentKafkaListenerContainerFactory<String, NotificationDto> kafkaListenerContainerFactory(
+            ConsumerFactory<String, NotificationDto> consumerFactory) {
         ConcurrentKafkaListenerContainerFactory<String, NotificationDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-
-        // Assign a unique group ID for WebSocket consumers
-        factory.getContainerProperties().setGroupId("websocket-" + UUID.randomUUID().toString());
         return factory;
     }
 
     @Bean
-    public ConsumerFactory<String, NotificationDto> notificationDtoConsumerFactory() {
+    public ConsumerFactory<String, NotificationDto> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
+        // Here we use UUID to ensure each consumer has a unique group ID
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "websocket-group-" + UUID.randomUUID());
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");  // Ensure all packages can be deserialized
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.webapp.notification.dto.NotificationDto"); // Specific to NotificationDto
 
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(NotificationDto.class));
+        // Specify the deserializer type for NotificationDto
+        JsonDeserializer<NotificationDto> deserializer = new JsonDeserializer<>(NotificationDto.class);
+        deserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
 }
