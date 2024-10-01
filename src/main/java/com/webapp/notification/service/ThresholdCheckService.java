@@ -1,11 +1,15 @@
 package com.webapp.notification.service;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.dto.PriceUpdateDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,7 +28,10 @@ public class ThresholdCheckService {
     private NotificationService notificationService;
 
     @Autowired
-    private RedisTemplate<String, List<Map<String, Object>>> redisTemplate; // Use Map instead of QueryDocumentSnapshot
+    private RedisTemplate<String, List<Map<String, Object>>> redisTemplate;
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate; // Kafka producer for WebSocket broadcasting
 
     private static final String COLLECTION_NAME = "notifications";
     private static final String CACHE_KEY = "notificationDocuments";
@@ -123,5 +130,9 @@ public class ThresholdCheckService {
         System.out.println("Sending notification to userId: " + userId + " for token: " + token + ", type: " + type + ", threshold: " + thresholdPrice + ", current price: " + currentPrice);
         notificationService.sendNotification(notificationDto);
         System.out.println("Notification sent to userId: " + userId);
+
+        // Also send notification via Kafka to WebSocket broadcasting topic
+        kafkaTemplate.send("websocket-broadcasts", notificationDto.toString());
+        System.out.println("Kafka WebSocket broadcast sent for userId: " + userId);
     }
 }
