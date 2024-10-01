@@ -38,7 +38,11 @@ public class ThresholdCheckService {
 
         if (cachedDocuments == null || cachedDocuments.isEmpty()) {
             // Cache is empty or expired, fetch from Firestore
-            System.out.println("Cache expired or empty. Fetching from Firestore...");
+            if (cachedDocuments != null) {
+                System.out.println("Cache expired. Fetching from Firestore...");
+            } else {
+                System.out.println("Cache empty. Fetching from Firestore...");
+            }
             CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
             ApiFuture<QuerySnapshot> future = notificationsCollection.get();
             List<QueryDocumentSnapshot> documents = future.get().getDocuments();
