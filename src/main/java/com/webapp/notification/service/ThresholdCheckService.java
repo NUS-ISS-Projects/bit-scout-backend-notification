@@ -28,7 +28,7 @@ public class ThresholdCheckService {
 
     private static final String COLLECTION_NAME = "notifications";
     private static final String CACHE_KEY = "notificationDocuments";
-    private static final long CACHE_EXPIRATION = 60; // Cache expiration time in seconds
+    private static final long CACHE_EXPIRATION = 60 * 2; // Cache expiration time in seconds
 
     public void checkThresholdsForAllUsers(PriceUpdateDto priceUpdate) throws InterruptedException, ExecutionException {
         System.out.println("Starting threshold check for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
@@ -38,11 +38,7 @@ public class ThresholdCheckService {
 
         if (cachedDocuments == null || cachedDocuments.isEmpty()) {
             // Cache is empty or expired, fetch from Firestore
-            if (cachedDocuments != null) {
-                System.out.println("Cache expired. Fetching from Firestore...");
-            } else {
-                System.out.println("Cache empty. Fetching from Firestore...");
-            }
+            System.out.println("Cache expired or empty. Fetching from Firestore...");
             CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
             ApiFuture<QuerySnapshot> future = notificationsCollection.get();
             List<QueryDocumentSnapshot> documents = future.get().getDocuments();
