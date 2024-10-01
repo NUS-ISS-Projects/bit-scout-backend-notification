@@ -5,11 +5,13 @@ import com.google.cloud.firestore.*;
 import com.webapp.notification.dto.NotificationDto;
 import com.webapp.notification.dto.PriceUpdateDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ThresholdCheckService {
@@ -20,17 +22,39 @@ public class ThresholdCheckService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private RedisTemplate<String, List<QueryDocumentSnapshot>> redisTemplate; // Redis integration for caching
+
     private static final String COLLECTION_NAME = "notifications";
+    private static final String CACHE_KEY = "notificationDocuments";
+    private static final long CACHE_EXPIRATION = 60; // Cache expiration time in seconds
 
     public void checkThresholdsForAllUsers(PriceUpdateDto priceUpdate) throws InterruptedException, ExecutionException {
         System.out.println("Starting threshold check for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
 
-        // Fetching all notifications from Firestore
-        CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
-        ApiFuture<QuerySnapshot> future = notificationsCollection.get();
-        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-        System.out.println("Total users with notifications: " + documents.size());
+        // Check if notification documents are cached in Redis
+        List<QueryDocumentSnapshot> documents = redisTemplate.opsForValue().get(CACHE_KEY);
 
+        if (documents == null || documents.isEmpty()) {
+            // Cache is empty or expired, fetch from Firestore
+            System.out.println("Cache expired or empty. Fetching from Firestore...");
+            CollectionReference notificationsCollection = firestore.collection(COLLECTION_NAME);
+            ApiFuture<QuerySnapshot> future = notificationsCollection.get();
+            documents = future.get().getDocuments();
+
+            // Cache the fetched documents in Redis with expiration
+            redisTemplate.opsForValue().set(CACHE_KEY, documents, CACHE_EXPIRATION, TimeUnit.SECONDS);
+            System.out.println("Fetched " + documents.size() + " documents from Firestore and cached them in Redis.");
+        } else {
+            System.out.println("Using cached data from Redis.");
+            System.out.println("Cached documents count: " + documents.size());
+        }
+
+        // Proceed with the threshold check using the cached or freshly fetched documents
+        processDocuments(documents, priceUpdate);
+    }
+
+    private void processDocuments(List<QueryDocumentSnapshot> documents, PriceUpdateDto priceUpdate) {
         for (QueryDocumentSnapshot document : documents) {
             Map<String, Object> data = document.getData();
             System.out.println("Processing userId: " + document.getId());
