@@ -13,12 +13,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -38,6 +42,12 @@ class ThresholdCheckServiceTests {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private RedisTemplate<String, List<Map<String, Object>>> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, List<Map<String, Object>>> valueOperations;
 
     @InjectMocks
     private ThresholdCheckService thresholdCheckService;
@@ -64,24 +74,12 @@ class ThresholdCheckServiceTests {
         when(collectionReference.whereEqualTo(anyString(), anyString())).thenReturn(collectionReference);
         when(collectionReference.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
+
+        // Mock Redis behavior
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations); // Mock ValueOperations
+        when(valueOperations.get(anyString())).thenReturn(null); // Simulate cache miss
+        doNothing().when(valueOperations).set(anyString(), any(), anyLong(), any());
     }
-
-    // @Test
-    // void checkThresholdsForAllUsers_PriceFallReached_ShouldNotifyUser() throws InterruptedException, ExecutionException {
-    //     // Set price below the notification threshold
-    //     priceUpdateDto.setPrice(60000.0);  // Current price is below the threshold of 62000.0
-
-    //     // Mock the Firestore response to return a valid notification
-    //     QueryDocumentSnapshot documentSnapshot = mock(QueryDocumentSnapshot.class);
-    //     when(documentSnapshot.toObject(Notification.class)).thenReturn(notification);
-    //     when(querySnapshot.getDocuments()).thenReturn(Arrays.asList(documentSnapshot));
-
-    //     // Perform the check
-    //     thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
-
-    //     // Verify that sendNotification() was called
-    //     verify(notificationService, times(1)).sendNotification(any(NotificationDto.class));
-    // }
 
     @Test
     void checkThresholdsForAllUsers_PriceRiseReached_ShouldNotNotifyUser() throws InterruptedException, ExecutionException {
@@ -105,5 +103,34 @@ class ThresholdCheckServiceTests {
         thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
 
         verify(notificationService, times(0)).sendNotification(any(NotificationDto.class));
+    }
+
+    @Test
+    void checkThresholdsForAllUsers_CacheMiss_ShouldFetchFromFirestore() throws InterruptedException, ExecutionException {
+        // Simulate cache miss by returning null from Redis
+        when(redisTemplate.opsForValue().get(anyString())).thenReturn(null);
+
+        // Simulate Firestore returning some documents
+        QueryDocumentSnapshot documentSnapshot = mock(QueryDocumentSnapshot.class);
+        when(querySnapshot.getDocuments()).thenReturn(Arrays.asList(documentSnapshot));
+
+        // Perform the check
+        thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
+
+        // Verify Firestore was called
+        verify(firestore.collection(anyString()), times(1)).get();
+    }
+
+    @Test
+    void checkThresholdsForAllUsers_CacheHit_ShouldNotFetchFromFirestore() throws InterruptedException, ExecutionException {
+        // Simulate cache hit by returning some cached data from Redis
+        Map<String, Object> cachedData = mock(Map.class);
+        when(redisTemplate.opsForValue().get(anyString())).thenReturn(Arrays.asList(cachedData));
+
+        // Perform the check
+        thresholdCheckService.checkThresholdsForAllUsers(priceUpdateDto);
+
+        // Verify Firestore was not called
+        verify(firestore.collection(anyString()), times(0)).get();
     }
 }

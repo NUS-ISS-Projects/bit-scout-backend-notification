@@ -7,6 +7,7 @@ public class NotificationDto {
     private Double notificationValue;
     private String remarks;
     private Double currentPrice;
+    private String podId;
 
     // Getters and Setters
     public String getUserId() {
@@ -55,5 +56,13 @@ public class NotificationDto {
 
     public void setCurrentPrice(Double currentPrice) {
         this.currentPrice = currentPrice;
+    }
+
+    public String getPodId() {
+        return podId;
+    }
+
+    public void setPodId(String podId) {
+        this.podId = podId;
     }
 }
