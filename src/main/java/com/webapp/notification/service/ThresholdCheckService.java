@@ -40,7 +40,9 @@ public class ThresholdCheckService {
 
     private static final String COLLECTION_NAME = "notifications";
     private static final String CACHE_KEY = "notificationDocuments";
-    private static final long CACHE_EXPIRATION = 60 * 2; // Cache expiration time in seconds
+    // private static final long CACHE_EXPIRATION = 60 * 2; // Cache expiration time in seconds
+    // For demo use only, simulate no cache
+    private static final long CACHE_EXPIRATION = 1; // Cache expiration time in seconds
 
     public void checkThresholdsForAllUsers(PriceUpdateDto priceUpdate) throws InterruptedException, ExecutionException {
         System.out.println("Starting threshold check for token: " + priceUpdate.getToken() + " with current price: " + priceUpdate.getPrice());
